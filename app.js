@@ -38,24 +38,43 @@ if(btnCerrarBanner) {
 }
 
 // ==========================================
-// 2. LÓGICA DE INTERFAZ Y PESTAÑAS
+// 2. LÓGICA DEL MENÚ MÓVIL (Hamburguesa)
+// ==========================================
+const menuToggle = document.getElementById('menu-toggle');
+const sidebar = document.querySelector('.sidebar');
+const overlay = document.getElementById('mobile-overlay');
+
+function toggleMenu() {
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('active');
+}
+
+if(menuToggle) menuToggle.addEventListener('click', toggleMenu);
+if(overlay) overlay.addEventListener('click', toggleMenu);
+
+
+// ==========================================
+// 3. LÓGICA DE INTERFAZ Y PESTAÑAS
 // ==========================================
 function showTab(tabId, boton) {
-    // Ocultar todos los contenidos y quitar estado activo de botones
+    // Ocultar contenidos
     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
     
-    // Mostrar la pestaña seleccionada
+    // Mostrar seleccionada
     document.getElementById(tabId).classList.add('active');
     
-    // Marcar el botón correcto como activo (Si no pasamos el botón, lo buscamos por defecto)
     if (boton) {
         boton.classList.add('active');
     } else {
-        // En caso de que se llame desde código (ej: al guardar equipo)
         const botones = document.querySelectorAll('.nav-btn');
         if(tabId === 'inventario') botones[1].classList.add('active');
         if(tabId === 'ventas') botones[3].classList.add('active');
+    }
+
+    // Si estamos en móvil y el menú está abierto, cerrarlo automáticamente
+    if (sidebar.classList.contains('open')) {
+        toggleMenu();
     }
 }
 
@@ -64,14 +83,14 @@ const formatCOP = (num) => {
 };
 
 // ==========================================
-// 3. BASES DE DATOS LOCALES
+// 4. BASES DE DATOS LOCALES
 // ==========================================
 let inventario = JSON.parse(localStorage.getItem('tecnoaldy_inventario')) || [];
 let ventas = JSON.parse(localStorage.getItem('tecnoaldy_ventas')) || [];
 let equipoEncontrado = null; 
 
 // ==========================================
-// 4. LÓGICA DE INGRESOS Y VENTAS
+// 5. LÓGICA DE INGRESOS Y VENTAS
 // ==========================================
 document.getElementById('form-ingreso').addEventListener('submit', function(e) {
     e.preventDefault();
@@ -96,7 +115,6 @@ document.getElementById('form-ingreso').addEventListener('submit', function(e) {
     renderizarVistas();
     this.reset();
     
-    // Salta a la pestaña inventario automáticamente
     showTab('inventario'); 
 });
 
@@ -122,8 +140,6 @@ document.getElementById('form-venta').addEventListener('submit', function(e) {
     if (!equipoEncontrado) return;
 
     const precioVenta = parseFloat(document.getElementById('precio_venta').value);
-    
-    // Fecha y hora del sistema local
     const ahora = new Date();
     const fechaFormateada = ahora.toLocaleDateString('es-CO'); 
     const horaFormateada = ahora.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
@@ -146,7 +162,6 @@ document.getElementById('form-venta').addEventListener('submit', function(e) {
     document.getElementById('btn-confirmar-venta').disabled = true;
     equipoEncontrado = null;
 
-    // Salta a la pestaña de ventas
     showTab('ventas');
 });
 
@@ -191,7 +206,7 @@ function renderizarVistas() {
 }
 
 // ==========================================
-// 5. ESCÁNER DE CÓDIGOS (html5-qrcode)
+// 6. ESCÁNER DE CÓDIGOS (html5-qrcode)
 // ==========================================
 let escannerActivo = null;
 let inputDestino = '';
@@ -221,10 +236,7 @@ function onScanSuccess(textoDecodificado, resultado) {
     cerrarScanner();
 }
 
-function onScanFailure(error) {
-    // Ignorar errores mientras busca el código
-}
+function onScanFailure(error) {}
 
-// Inicializar fecha de hoy por defecto y cargar datos
 document.getElementById('fecha').value = new Date().toISOString().split('T')[0];
 renderizarVistas();

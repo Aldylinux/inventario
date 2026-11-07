@@ -22,7 +22,15 @@ body {
     min-height: 100vh;
 }
 
-/* Make content stay above the background logo */
+/* Base Components hidden on Desktop */
+.mobile-header {
+    display: none;
+}
+
+.overlay {
+    display: none;
+}
+
 .sidebar, .content {
     position: relative;
     z-index: 1;
@@ -36,6 +44,9 @@ body {
     padding: 20px 0;
     display: flex;
     flex-direction: column;
+    height: 100vh;
+    position: sticky;
+    top: 0;
 }
 
 .logo-container {
@@ -77,8 +88,8 @@ body {
 .content {
     flex: 1;
     padding: 40px;
-    overflow-y: auto;
     width: 100%;
+    overflow-x: hidden;
 }
 
 .tab-content {
@@ -186,7 +197,7 @@ table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 10px;
-    min-width: 500px; /* Asegura que la tabla no se aplaste demasiado */
+    min-width: 500px;
 }
 
 th, td {
@@ -201,18 +212,13 @@ th {
     white-space: nowrap;
 }
 
-td {
-    color: var(--text-light);
-}
-
-/* Cuadro de información en Ingresar Venta */
+/* Elementos Extra (Scanner, InfoBox, Banner) */
 .info-box {
     background-color: var(--bg-dark);
     padding: 15px;
     border-radius: 6px;
     margin-bottom: 20px;
     border: 1px solid var(--primary-orange);
-    box-shadow: 0 0 10px rgba(255, 102, 0, 0.1);
 }
 
 .info-box .resaltado {
@@ -228,12 +234,6 @@ td {
     margin-bottom: 5px;
 }
 
-.info-box #detalle-costo {
-    color: var(--text-muted);
-    font-size: 13px;
-}
-
-/* Logo de Fondo Neón */
 .bg-logo {
     position: fixed;
     top: 50%;
@@ -255,7 +255,6 @@ td {
     100% { filter: drop-shadow(0 0 35px var(--primary-orange)) drop-shadow(0 0 60px var(--primary-orange)); }
 }
 
-/* Grupo Input + Botón Escáner */
 .imei-scanner-group {
     display: flex;
     gap: 10px;
@@ -273,13 +272,11 @@ td {
     border-radius: 6px;
     cursor: pointer;
     font-weight: bold;
-    transition: 0.3s;
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
-/* Modal del Escáner */
 .modal {
     display: none;
     position: fixed;
@@ -311,12 +308,6 @@ td {
     cursor: pointer;
 }
 
-#reader {
-    width: 100%;
-    margin-top: 15px;
-}
-
-/* Banner de Instalación PWA */
 .install-banner {
     position: fixed;
     bottom: 20px;
@@ -326,7 +317,6 @@ td {
     border: 1px solid var(--primary-orange);
     padding: 15px 20px;
     border-radius: 12px;
-    box-shadow: 0 5px 25px rgba(255, 102, 0, 0.3);
     z-index: 10000;
     display: flex;
     align-items: center;
@@ -334,12 +324,6 @@ td {
     width: 90%;
     max-width: 450px;
     justify-content: space-between;
-    animation: slideUp 0.5s ease-out;
-}
-
-@keyframes slideUp {
-    from { bottom: -100px; opacity: 0; }
-    to { bottom: 20px; opacity: 1; }
 }
 
 .install-info {
@@ -362,64 +346,76 @@ td {
         flex-direction: column;
     }
 
-    /* Transformar el sidebar en un Menú Inferior Fijo */
-    .sidebar {
+    /* Header superior con las tres rayitas */
+    .mobile-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: var(--card-bg);
+        padding: 15px 20px;
+        border-bottom: 1px solid var(--border-color);
         position: fixed;
-        bottom: 0;
+        top: 0;
         left: 0;
         width: 100%;
-        height: 70px;
-        flex-direction: row;
-        padding: 0;
-        border-right: none;
-        border-top: 1px solid var(--border-color);
-        z-index: 2000; /* Siempre por encima */
-        box-shadow: 0 -4px 10px rgba(0,0,0,0.5);
+        z-index: 3000;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.5);
     }
 
-    /* Ocultar el logo de arriba en el menú para ahorrar espacio */
-    .logo-container {
+    .logo-mobile {
+        color: var(--primary-orange);
+        font-size: 20px;
+        font-weight: bold;
+    }
+
+    .hamburger-btn {
+        background: none;
+        border: none;
+        color: var(--text-light);
+        font-size: 24px;
+        cursor: pointer;
+    }
+
+    /* Fondo oscuro al abrir menú */
+    .overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.6);
+        z-index: 3500;
         display: none;
     }
 
-    /* Distribuir los botones a lo ancho */
-    .sidebar nav {
-        display: flex;
-        width: 100%;
-        justify-content: space-around;
-        align-items: center;
+    .overlay.active {
+        display: block;
     }
 
-    /* Cambiar botones para que el icono quede arriba del texto */
-    .nav-btn {
-        flex-direction: column;
-        padding: 10px 5px;
-        font-size: 11px; /* Texto más pequeño */
-        justify-content: center;
-        gap: 5px;
-        flex: 1;
-        text-align: center;
-        border-right: none;
-        border-top: 3px solid transparent; /* Ahora la línea activa sale arriba */
+    /* El menú lateral se esconde hacia la izquierda */
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: -280px; /* Escondido por defecto */
+        width: 280px;
+        height: 100vh;
+        z-index: 4000;
+        transition: left 0.3s ease-in-out;
+        box-shadow: 5px 0 15px rgba(0,0,0,0.5);
     }
 
-    .nav-btn i {
-        font-size: 20px;
+    .sidebar.open {
+        left: 0; /* Aparece cuando tiene la clase open */
     }
 
-    .nav-btn:hover, .nav-btn.active {
-        border-right: none;
-        border-top: 3px solid var(--primary-orange); /* Línea indicadora superior */
-        background-color: rgba(255, 102, 0, 0.05);
-    }
-
-    /* Ajustar el contenedor principal */
+    /* Ajustar el contenedor principal para que use toda la pantalla */
     .content {
-        padding: 15px; /* Menos márgenes laterales */
-        padding-bottom: 90px; /* Dejar espacio para no tapar contenido con el menú inferior */
+        padding: 15px;
+        padding-top: 85px; /* Espacio para que el header móvil no tape el contenido */
+        width: 100%;
     }
 
-    /* Los formularios que estaban lado a lado (RAM/ROM) ahora se apilan uno sobre otro */
+    /* Formularios y botones ajustados para tocar con el dedo */
     .row {
         flex-direction: column;
         gap: 0;
@@ -429,11 +425,6 @@ td {
         padding: 20px 15px;
     }
 
-    .card h3 {
-        font-size: 18px;
-    }
-
-    /* Ajustar los grupos de input con botones de escáner */
     .imei-scanner-group {
         flex-direction: column;
     }
@@ -442,10 +433,5 @@ td {
         width: 100%;
         justify-content: center;
         padding: 12px;
-    }
-
-    /* Subir el banner de instalación para que no quede detrás del menú nuevo */
-    .install-banner {
-        bottom: 85px;
     }
 }
