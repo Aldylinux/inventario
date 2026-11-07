@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario - TecnoAldy</title>
+    
+    <!-- Configuración PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ff6600">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Banner de Instalación de la App -->
+    <div id="install-banner" class="install-banner" style="display: none;">
+        <div class="install-info">
+            <img src="icon-192.png" alt="TecnoAldy App" class="install-icon">
+            <div>
+                <h4>Instalar TecnoAldy</h4>
+                <p>Agrega el inventario a tu pantalla de inicio</p>
+            </div>
+        </div>
+        <button id="btn-instalar" class="btn-primary" style="margin-top: 0; width: auto; padding: 8px 15px;">Instalar</button>
+        <button id="btn-cerrar-banner" class="close-banner">&times;</button>
+    </div>
+
+    <!-- Logo de Fondo con efecto Neón -->
+    <div class="bg-logo">
+        <img src="logo.png" alt="TecnoAldy Fondo">
+    </div>
+
+    <div class="sidebar">
+        <div class="logo-container">
+            <h2>TecnoAldy</h2>
+            <p>Control de Equipos</p>
+        </div>
+        <nav>
+            <button class="nav-btn active" onclick="showTab('nuevo', this)"><i class="fas fa-plus"></i> Ingresar Equipo</button>
+            <button class="nav-btn" onclick="showTab('inventario', this)"><i class="fas fa-box"></i> Inventario Actual</button>
+            <button class="nav-btn" onclick="showTab('nueva-venta', this)"><i class="fas fa-shopping-cart"></i> Ingresar Venta</button>
+            <button class="nav-btn" onclick="showTab('ventas', this)"><i class="fas fa-history"></i> Historial Ventas</button>
+        </nav>
+    </div>
+
+    <main class="content">
+        <!-- Pestaña: Nuevo Equipo -->
+        <section id="nuevo" class="tab-content active">
+            <div class="card form-card">
+                <h3>Registrar Nuevo Teléfono</h3>
+                <form id="form-ingreso">
+                    <div class="input-group">
+                        <label>Fecha de Ingreso</label>
+                        <input type="date" id="fecha" required>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>IMEI del Equipo</label>
+                        <div class="imei-scanner-group">
+                            <input type="number" id="imei" placeholder="Ej: 359123..." required>
+                            <button type="button" class="btn-scan" onclick="abrirScanner('imei')"><i class="fas fa-barcode"></i> Escanear</button>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Modelo del Equipo</label>
+                        <input type="text" id="modelo" placeholder="Ej: Samsung Galaxy A54" required>
+                    </div>
+                    <div class="row">
+                        <div class="input-group">
+                            <label>RAM (GB)</label>
+                            <input type="number" id="ram" placeholder="Ej: 8" required>
+                        </div>
+                        <div class="input-group">
+                            <label>ROM (GB)</label>
+                            <input type="number" id="rom" placeholder="Ej: 256" required>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Precio de Entrada (COP)</label>
+                        <input type="number" id="precio_entrada" placeholder="Ej: 850000" required>
+                    </div>
+                    <button type="submit" class="btn-primary">Guardar en Inventario</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Pestaña: Inventario -->
+        <section id="inventario" class="tab-content">
+            <div class="card">
+                <h3>Equipos Disponibles</h3>
+                <div class="table-responsive">
+                    <table id="tabla-inventario">
+                        <thead>
+                            <tr>
+                                <th>Fecha Ingreso</th>
+                                <th>IMEI</th>
+                                <th>Modelo</th>
+                                <th>Specs</th>
+                                <th>Precio Costo</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Pestaña: Ingresar Venta -->
+        <section id="nueva-venta" class="tab-content">
+            <div class="card form-card">
+                <h3>Registrar Salida / Venta</h3>
+                <form id="form-venta">
+                    <div class="input-group">
+                        <label>Buscar Equipo (Por Modelo o escanear IMEI)</label>
+                        <div class="imei-scanner-group">
+                            <input type="text" id="buscar_imei" list="lista-imeis" placeholder="Escribe o escanea..." required autocomplete="off">
+                            <button type="button" class="btn-scan" onclick="abrirScanner('buscar_imei')"><i class="fas fa-barcode"></i> Escanear</button>
+                        </div>
+                        <datalist id="lista-imeis"></datalist>
+                    </div>
+                    
+                    <div id="info-equipo-venta" class="info-box" style="display: none;">
+                        <p class="resaltado"><strong>Equipo Seleccionado:</strong></p>
+                        <p id="detalle-modelo"></p>
+                        <p id="detalle-costo"></p>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Precio de Venta (COP)</label>
+                        <input type="number" id="precio_venta" placeholder="Ej: 1100000" required>
+                    </div>
+                    <button type="submit" class="btn-primary" id="btn-confirmar-venta" disabled>Confirmar Venta</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Pestaña: Historial de Ventas -->
+        <section id="ventas" class="tab-content">
+            <div class="card">
+                <h3>Historial de Equipos Vendidos</h3>
+                <div class="table-responsive">
+                    <table id="tabla-ventas">
+                        <thead>
+                            <tr>
+                                <th>Fecha y Hora</th>
+                                <th>IMEI</th>
+                                <th>Modelo</th>
+                                <th>Costo</th>
+                                <th>Venta</th>
+                                <th>Ganancia</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal para el Escáner -->
+    <div id="scanner-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="cerrarScanner()">&times;</span>
+            <h3>Enfoca el Código de Barras / QR</h3>
+            <div id="reader"></div>
+        </div>
+    </div>
+
+    <!-- Librerías y Scripts -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="app.js"></script>
+</body>
+</html>

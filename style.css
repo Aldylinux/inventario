@@ -1,0 +1,451 @@
+:root {
+    --bg-dark: #121212;
+    --card-bg: #1e1e1e;
+    --primary-orange: #ff6600;
+    --primary-hover: #e65c00;
+    --text-light: #f5f5f5;
+    --text-muted: #aaaaaa;
+    --border-color: #333333;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-light);
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Make content stay above the background logo */
+.sidebar, .content {
+    position: relative;
+    z-index: 1;
+}
+
+/* Sidebar (PC) */
+.sidebar {
+    width: 250px;
+    background-color: var(--card-bg);
+    border-right: 1px solid var(--border-color);
+    padding: 20px 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.logo-container {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.logo-container h2 {
+    color: var(--primary-orange);
+    font-size: 24px;
+}
+
+.logo-container p {
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+.nav-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    padding: 15px 20px;
+    text-align: left;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.nav-btn:hover, .nav-btn.active {
+    background-color: rgba(255, 102, 0, 0.1);
+    color: var(--primary-orange);
+    border-right: 3px solid var(--primary-orange);
+}
+
+/* Main Content */
+.content {
+    flex: 1;
+    padding: 40px;
+    overflow-y: auto;
+    width: 100%;
+}
+
+.tab-content {
+    display: none;
+    animation: fadeIn 0.4s ease-in-out;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Cards & Forms */
+.card {
+    background-color: var(--card-bg);
+    padding: 30px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+}
+
+.form-card {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.card h3 {
+    margin-bottom: 25px;
+    color: var(--primary-orange);
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+}
+
+.input-group {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.row {
+    display: flex;
+    gap: 20px;
+}
+
+.row .input-group {
+    flex: 1;
+}
+
+label {
+    margin-bottom: 8px;
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+input {
+    background-color: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    color: var(--text-light);
+    padding: 12px;
+    border-radius: 6px;
+    outline: none;
+    transition: 0.3s;
+    width: 100%;
+}
+
+input:focus {
+    border-color: var(--primary-orange);
+    box-shadow: 0 0 5px rgba(255, 102, 0, 0.3);
+}
+
+.btn-primary {
+    background-color: var(--primary-orange);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    width: 100%;
+    font-size: 16px;
+    font-weight: bold;
+    transition: 0.3s;
+    margin-top: 10px;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background-color: var(--primary-hover);
+}
+
+.btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Tables */
+.table-responsive {
+    overflow-x: auto;
+    width: 100%;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    min-width: 500px; /* Asegura que la tabla no se aplaste demasiado */
+}
+
+th, td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+th {
+    color: var(--text-muted);
+    font-weight: normal;
+    white-space: nowrap;
+}
+
+td {
+    color: var(--text-light);
+}
+
+/* Cuadro de información en Ingresar Venta */
+.info-box {
+    background-color: var(--bg-dark);
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    border: 1px solid var(--primary-orange);
+    box-shadow: 0 0 10px rgba(255, 102, 0, 0.1);
+}
+
+.info-box .resaltado {
+    color: var(--primary-orange);
+    margin-bottom: 5px;
+    font-size: 15px;
+}
+
+.info-box #detalle-modelo {
+    font-size: 16px;
+    font-weight: bold;
+    color: white;
+    margin-bottom: 5px;
+}
+
+.info-box #detalle-costo {
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+/* Logo de Fondo Neón */
+.bg-logo {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 0;
+    opacity: 0.08;
+    pointer-events: none;
+}
+
+.bg-logo img {
+    max-width: 450px;
+    width: 100%;
+    animation: neonPulse 2s infinite alternate ease-in-out;
+}
+
+@keyframes neonPulse {
+    0% { filter: drop-shadow(0 0 10px var(--primary-orange)); }
+    100% { filter: drop-shadow(0 0 35px var(--primary-orange)) drop-shadow(0 0 60px var(--primary-orange)); }
+}
+
+/* Grupo Input + Botón Escáner */
+.imei-scanner-group {
+    display: flex;
+    gap: 10px;
+}
+
+.imei-scanner-group input {
+    flex: 1;
+}
+
+.btn-scan {
+    background-color: var(--card-bg);
+    border: 1px solid var(--primary-orange);
+    color: var(--primary-orange);
+    padding: 0 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Modal del Escáner */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.85);
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    background-color: var(--card-bg);
+    margin: 5% auto;
+    padding: 20px;
+    border: 1px solid var(--primary-orange);
+    width: 90%;
+    max-width: 500px;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.close-modal {
+    color: var(--text-muted);
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#reader {
+    width: 100%;
+    margin-top: 15px;
+}
+
+/* Banner de Instalación PWA */
+.install-banner {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--card-bg);
+    border: 1px solid var(--primary-orange);
+    padding: 15px 20px;
+    border-radius: 12px;
+    box-shadow: 0 5px 25px rgba(255, 102, 0, 0.3);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    width: 90%;
+    max-width: 450px;
+    justify-content: space-between;
+    animation: slideUp 0.5s ease-out;
+}
+
+@keyframes slideUp {
+    from { bottom: -100px; opacity: 0; }
+    to { bottom: 20px; opacity: 1; }
+}
+
+.install-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.install-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+}
+
+/* ==========================================
+   DISEÑO RESPONSIVO (PARA CELULARES)
+   ========================================== */
+@media (max-width: 768px) {
+    body {
+        flex-direction: column;
+    }
+
+    /* Transformar el sidebar en un Menú Inferior Fijo */
+    .sidebar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 70px;
+        flex-direction: row;
+        padding: 0;
+        border-right: none;
+        border-top: 1px solid var(--border-color);
+        z-index: 2000; /* Siempre por encima */
+        box-shadow: 0 -4px 10px rgba(0,0,0,0.5);
+    }
+
+    /* Ocultar el logo de arriba en el menú para ahorrar espacio */
+    .logo-container {
+        display: none;
+    }
+
+    /* Distribuir los botones a lo ancho */
+    .sidebar nav {
+        display: flex;
+        width: 100%;
+        justify-content: space-around;
+        align-items: center;
+    }
+
+    /* Cambiar botones para que el icono quede arriba del texto */
+    .nav-btn {
+        flex-direction: column;
+        padding: 10px 5px;
+        font-size: 11px; /* Texto más pequeño */
+        justify-content: center;
+        gap: 5px;
+        flex: 1;
+        text-align: center;
+        border-right: none;
+        border-top: 3px solid transparent; /* Ahora la línea activa sale arriba */
+    }
+
+    .nav-btn i {
+        font-size: 20px;
+    }
+
+    .nav-btn:hover, .nav-btn.active {
+        border-right: none;
+        border-top: 3px solid var(--primary-orange); /* Línea indicadora superior */
+        background-color: rgba(255, 102, 0, 0.05);
+    }
+
+    /* Ajustar el contenedor principal */
+    .content {
+        padding: 15px; /* Menos márgenes laterales */
+        padding-bottom: 90px; /* Dejar espacio para no tapar contenido con el menú inferior */
+    }
+
+    /* Los formularios que estaban lado a lado (RAM/ROM) ahora se apilan uno sobre otro */
+    .row {
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .card {
+        padding: 20px 15px;
+    }
+
+    .card h3 {
+        font-size: 18px;
+    }
+
+    /* Ajustar los grupos de input con botones de escáner */
+    .imei-scanner-group {
+        flex-direction: column;
+    }
+
+    .btn-scan {
+        width: 100%;
+        justify-content: center;
+        padding: 12px;
+    }
+
+    /* Subir el banner de instalación para que no quede detrás del menú nuevo */
+    .install-banner {
+        bottom: 85px;
+    }
+}
