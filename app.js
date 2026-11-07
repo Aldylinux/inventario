@@ -57,11 +57,8 @@ if(overlay) overlay.addEventListener('click', toggleMenu);
 // 3. LÓGICA DE INTERFAZ Y PESTAÑAS
 // ==========================================
 function showTab(tabId, boton) {
-    // Ocultar contenidos
     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-    
-    // Mostrar seleccionada
     document.getElementById(tabId).classList.add('active');
     
     if (boton) {
@@ -72,8 +69,7 @@ function showTab(tabId, boton) {
         if(tabId === 'ventas') botones[3].classList.add('active');
     }
 
-    // Si estamos en móvil y el menú está abierto, cerrarlo automáticamente
-    if (sidebar.classList.contains('open')) {
+    if (sidebar && sidebar.classList.contains('open')) {
         toggleMenu();
     }
 }
@@ -90,7 +86,45 @@ let ventas = JSON.parse(localStorage.getItem('tecnoaldy_ventas')) || [];
 let equipoEncontrado = null; 
 
 // ==========================================
-// 5. LÓGICA DE INGRESOS Y VENTAS
+// 5. AUTOCOMPLETADO INTELIGENTE DE IMEI (NUEVO)
+// ==========================================
+// Diccionario de los primeros 8 dígitos (TAC). 
+// Puedes ir agregando los de los equipos que más vendes aquí:
+const tacDB = {
+    "35912345": { modelo: "Samsung Galaxy A54", ram: 8, rom: 256 },
+    "86123456": { modelo: "Xiaomi Redmi Note 14 Pro", ram: 8, rom: 256 }, // Ejemplo basado en tus consultas recientes
+    "35876543": { modelo: "iPhone 16 Pro Max", ram: 8, rom: 256 },
+    "35353535": { modelo: "Tecno Spark 20", ram: 8, rom: 256 }
+};
+
+function autocompletarDatosIMEI(imei) {
+    // El IMEI debe tener al menos 8 dígitos para extraer el TAC
+    if (imei.length >= 8) {
+        const tac = imei.substring(0, 8); // Extrae los primeros 8 números
+        
+        // Busca si el TAC está en tu base de datos local
+        if (tacDB[tac]) {
+            document.getElementById('modelo').value = tacDB[tac].modelo;
+            document.getElementById('ram').value = tacDB[tac].ram;
+            document.getElementById('rom').value = tacDB[tac].rom;
+            
+            // Pequeño efecto visual para que sepas que funcionó
+            document.getElementById('modelo').style.borderColor = "#28a745";
+            setTimeout(() => { document.getElementById('modelo').style.borderColor = "var(--border-color)"; }, 1000);
+        }
+    }
+}
+
+// Escucha cuando escribes el IMEI a mano o usas una pistola de código de barras
+document.getElementById('imei').addEventListener('input', function(e) {
+    if(e.target.value.length === 15) {
+        autocompletarDatosIMEI(e.target.value);
+    }
+});
+
+
+// ==========================================
+// 6. LÓGICA DE INGRESOS Y VENTAS
 // ==========================================
 document.getElementById('form-ingreso').addEventListener('submit', function(e) {
     e.preventDefault();
@@ -114,7 +148,6 @@ document.getElementById('form-ingreso').addEventListener('submit', function(e) {
     guardarDatos();
     renderizarVistas();
     this.reset();
-    
     showTab('inventario'); 
 });
 
@@ -206,7 +239,7 @@ function renderizarVistas() {
 }
 
 // ==========================================
-// 6. ESCÁNER DE CÓDIGOS (html5-qrcode)
+// 7. ESCÁNER DE CÓDIGOS AUTOMÁTICO (Cámara Trasera)
 // ==========================================
 let escannerActivo = null;
 let inputDestino = '';
@@ -215,28 +248,51 @@ function abrirScanner(inputId) {
     inputDestino = inputId;
     document.getElementById('scanner-modal').style.display = 'block';
     
-    escannerActivo = new Html5QrcodeScanner("reader", { 
-        fps: 10, 
-        qrbox: { width: 300, height: 100 } 
-    }, false);
+    // Configuramos el lector sin la interfaz fea (solo la cámara)
+    escannerActivo = new Html5Qrcode("reader");
     
-    escannerActivo.render(onScanSuccess, onScanFailure);
+    const configEscaneo = { 
+        fps: 10, 
+        qrbox: { width: 280, height: 100 } // Rectángulo ancho para IMEI
+    };
+
+    // Forzar el uso de la cámara trasera ("environment") de manera automática
+    escannerActivo.start(
+        { facingMode: "environment" }, 
+        configEscaneo, 
+        onScanSuccess, 
+        onScanFailure
+    ).catch(err => {
+        alert("Error al abrir la cámara. Asegúrate de darle permisos.");
+        cerrarScanner();
+    });
 }
 
 function cerrarScanner() {
     document.getElementById('scanner-modal').style.display = 'none';
     if(escannerActivo) {
-        escannerActivo.clear();
+        escannerActivo.stop().then(() => {
+            escannerActivo.clear();
+            escannerActivo = null;
+        }).catch(err => {
+            console.log("Error al detener el escáner:", err);
+        });
     }
 }
 
 function onScanSuccess(textoDecodificado, resultado) {
+    // Pone el texto en el input correspondiente
     document.getElementById(inputDestino).value = textoDecodificado;
-    document.getElementById(inputDestino).dispatchEvent(new Event('input'));
+    document.getElementById(inputDestino).dispatchEvent(new Event('input')); 
+    
+    if(inputDestino === 'imei') {
+        autocompletarDatosIMEI(textoDecodificado);
+    }
+    
+    // Cierra la cámara automáticamente al leer el código
     cerrarScanner();
 }
 
-function onScanFailure(error) {}
-
-document.getElementById('fecha').value = new Date().toISOString().split('T')[0];
-renderizarVistas();
+function onScanFailure(error) {
+    // Ignorar errores silenciosos mientras intenta enfocar
+}

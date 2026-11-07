@@ -277,6 +277,9 @@ th {
     gap: 8px;
 }
 
+/* ... (tu código CSS anterior queda igual) ... */
+
+/* Modal del Escáner CENTRADO */
 .modal {
     display: none;
     position: fixed;
@@ -291,21 +294,43 @@ th {
 
 .modal-content {
     background-color: var(--card-bg);
-    margin: 5% auto;
+    /* Estas 4 líneas son las que centran el cuadro perfectamente en la pantalla */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    
     padding: 20px;
     border: 1px solid var(--primary-orange);
     width: 90%;
     max-width: 500px;
     border-radius: 12px;
     text-align: center;
+    box-shadow: 0 0 20px rgba(255, 102, 0, 0.4);
 }
 
 .close-modal {
     color: var(--text-muted);
-    float: right;
+    position: absolute;
+    right: 15px;
+    top: 10px;
     font-size: 28px;
     font-weight: bold;
     cursor: pointer;
+    z-index: 1000;
+}
+
+/* Ocultar botones extra de la librería para dejar solo la cámara */
+#reader {
+    width: 100%;
+    margin-top: 25px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+#reader__dashboard_section_csr span,
+#reader__dashboard_section_swaplink {
+    display: none !important;
 }
 
 .install-banner {
