@@ -1,25 +1,11 @@
-const CACHE_NAME = 'tecnoaldy-v2'; // Cambiamos a v2
-const urlsToCache = [
-  '/',
-  '/index.html',
-  '/style.css?v=2',
-  '/app.js?v=2',
-  '/manifest.json',
-  '/logo.png',
-  '/icon-192.png',
-  '/icon-512.png'
-];
+const CACHE_NAME = 'tecnoaldy-v3';
 
 self.addEventListener('install', event => {
-  self.skipWaiting(); // Obliga a instalar la nueva versión de inmediato
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
-  );
+  self.skipWaiting(); // Obliga a instalarse de inmediato
 });
 
-// Esta función borra el caché viejo (v1) del celular
 self.addEventListener('activate', event => {
+  // Borra cualquier memoria caché vieja que haya quedado
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
@@ -35,9 +21,20 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
+// ESTRATEGIA: Internet Primero, Caché como respaldo
 self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request)
-      .then(response => response || fetch(event.request))
+    fetch(event.request)
+      .then(networkResponse => {
+        // Si hay internet y hay algo nuevo, lo descarga y lo guarda en el caché
+        return caches.open(CACHE_NAME).then(cache => {
+          cache.put(event.request, networkResponse.clone());
+          return networkResponse;
+        });
+      })
+      .catch(() => {
+        // Si no hay internet, saca la página guardada del caché
+        return caches.match(event.request);
+      })
   );
 });
