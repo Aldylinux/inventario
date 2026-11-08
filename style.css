@@ -460,3 +460,25 @@ th {
         padding: 12px;
     }
 }
+/* Animación de la bolita RGB analizando IMEI */
+.spinner-rgb {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: conic-gradient(#ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000);
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 0);
+    mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 0);
+    animation: spin-rgb 1s linear infinite;
+    flex-shrink: 0;
+}
+
+@keyframes spin-rgb {
+    100% { transform: rotate(360deg); }
+}
+
+/* Asegurar que los elementos del grupo estén centrados horizontalmente */
+.imei-scanner-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}

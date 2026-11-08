@@ -98,20 +98,42 @@ const tacDB = {
 };
 
 function autocompletarDatosIMEI(imei) {
-    // El IMEI debe tener al menos 8 dígitos para extraer el TAC
     if (imei.length >= 8) {
-        const tac = imei.substring(0, 8); // Extrae los primeros 8 números
+        const tac = imei.substring(0, 8); // Extrae los 8 números clave
         
-        // Busca si el TAC está en tu base de datos local
-        if (tacDB[tac]) {
-            document.getElementById('modelo').value = tacDB[tac].modelo;
-            document.getElementById('ram').value = tacDB[tac].ram;
-            document.getElementById('rom').value = tacDB[tac].rom;
-            
-            // Pequeño efecto visual para que sepas que funcionó
-            document.getElementById('modelo').style.borderColor = "#28a745";
-            setTimeout(() => { document.getElementById('modelo').style.borderColor = "var(--border-color)"; }, 1000);
-        }
+        const spinner = document.getElementById('loading-imei');
+        const btnScan = document.getElementById('btn-scan-imei');
+        
+        // 1. Mostrar la bolita RGB y ocultar el botón de escanear temporalmente
+        if(spinner) spinner.style.display = 'block';
+        if(btnScan) btnScan.style.display = 'none';
+        
+        // 2. Simular el tiempo de conexión y análisis (1.5 segundos)
+        setTimeout(() => {
+            // Ocultar bolita y devolver el botón
+            if(spinner) spinner.style.display = 'none';
+            if(btnScan) btnScan.style.display = 'flex';
+
+            // 3. Revisar si tenemos los datos
+            if (tacDB[tac]) {
+                document.getElementById('modelo').value = tacDB[tac].modelo;
+                document.getElementById('ram').value = tacDB[tac].ram;
+                document.getElementById('rom').value = tacDB[tac].rom;
+                
+                // Brillo verde de éxito
+                document.getElementById('modelo').style.borderColor = "#28a745";
+                setTimeout(() => { document.getElementById('modelo').style.borderColor = "var(--border-color)"; }, 1500);
+            } else {
+                // SI ES UN MODELO NUEVO QUE NO ESTÁ EN EL CÓDIGO
+                document.getElementById('modelo').value = `TAC nuevo (${tac}) - Llenar manual`;
+                document.getElementById('ram').value = "";
+                document.getElementById('rom').value = "";
+                
+                // Brillo amarillo de advertencia
+                document.getElementById('modelo').style.borderColor = "#ffcc00";
+                setTimeout(() => { document.getElementById('modelo').style.borderColor = "var(--border-color)"; }, 2500);
+            }
+        }, 1500); // 1500 milisegundos = 1.5 segundos de bolita girando
     }
 }
 

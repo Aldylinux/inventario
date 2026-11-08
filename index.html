@@ -125,12 +125,15 @@
                 <h3>Registrar Salida / Venta</h3>
                 <form id="form-venta">
                     <div class="input-group">
-                        <label>Buscar Equipo (Por Modelo o escanear IMEI)</label>
+                        <label>IMEI del Equipo</label>
                         <div class="imei-scanner-group">
-                            <input type="text" id="buscar_imei" list="lista-imeis" placeholder="Escribe o escanea..." required autocomplete="off">
-                            <button type="button" class="btn-scan" onclick="abrirScanner('buscar_imei')"><i class="fas fa-barcode"></i> Escanear</button>
+                            <input type="number" id="imei" placeholder="Ej: 359123..." required>
+                            
+                            <!-- Bolita RGB oculta por defecto -->
+                            <div id="loading-imei" class="spinner-rgb" style="display: none;"></div>
+                            
+                            <button type="button" class="btn-scan" id="btn-scan-imei" onclick="abrirScanner('imei')"><i class="fas fa-barcode"></i> Escanear</button>
                         </div>
-                        <datalist id="lista-imeis"></datalist>
                     </div>
                     
                     <div id="info-equipo-venta" class="info-box" style="display: none;">
