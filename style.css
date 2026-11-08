@@ -215,3 +215,40 @@ th { color: var(--text-muted); font-weight: normal; white-space: nowrap; }
     .imei-scanner-group { flex-direction: column; }
     .btn-scan { width: 100%; justify-content: center; padding: 12px; }
 }
+/* ==========================================
+   DISEÑO PARA BOTONES PDF Y ENCABEZADOS
+   ========================================== */
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+}
+
+/* Evitamos que el h3 tenga su propio borde ahora que lo tiene el contenedor */
+.card-header h3 {
+    margin-bottom: 0;
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.btn-pdf {
+    background-color: #dc3545; /* Rojo estilo PDF */
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: 0.3s;
+}
+
+.btn-pdf:hover {
+    background-color: #c82333;
+}

@@ -333,3 +333,90 @@ function onScanSuccess(textoDecodificado) {
 }
 
 document.getElementById('fecha').value = new Date().toISOString().split('T')[0];
+// ==========================================
+// 8. GENERADOR DE REPORTES PDF
+// ==========================================
+window.descargarPDF = function(tipo) {
+    // Inicializar jsPDF en modo horizontal ('l' = landscape) para que quepan las columnas
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('l', 'mm', 'a4'); 
+
+    let titulo = "";
+    let columnas = [];
+    let filas = [];
+
+    // Preparamos los datos dependiendo de qué botón oprimió Aldi
+    if (tipo === 'inventario') {
+        titulo = "Inventario Actual - TecnoAldy";
+        columnas = ["Fecha", "IMEI", "Modelo", "RAM/ROM", "Precio Costo"];
+        filas = inventario.map(eq => [
+            eq.fecha, eq.imei, eq.modelo, `${eq.ram} / ${eq.rom}`, formatCOP(eq.precio_entrada)
+        ]);
+    } else if (tipo === 'ventas') {
+        titulo = "Historial de Ventas - TecnoAldy";
+        columnas = ["Fecha Venta", "IMEI", "Modelo", "Plataforma", "Costo", "Venta", "Ganancia"];
+        filas = ventas.map(v => [
+            v.fecha_hora_venta, v.imei, v.modelo, v.plataforma || 'Contado', 
+            formatCOP(v.precio_entrada), formatCOP(v.precio_venta), formatCOP(v.ganancia)
+        ]);
+    } else if (tipo === 'registro') {
+        titulo = "Registro Histórico Master - TecnoAldy";
+        columnas = ["Fecha Ingreso", "IMEI", "Modelo", "RAM/ROM", "Precio Costo"];
+        filas = registroHistorico.map(eq => [
+            eq.fecha, eq.imei, eq.modelo, `${eq.ram} / ${eq.rom}`, formatCOP(eq.precio_entrada)
+        ]);
+    }
+
+    // Dibujar el título y la fecha en el PDF
+    doc.setFontSize(18);
+    doc.setTextColor(255, 102, 0); // Título en naranja TecnoAldy
+    doc.text(titulo, 14, 20);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100); // Gris oscuro
+    doc.text(`Reporte generado el: ${new Date().toLocaleString('es-CO')}`, 14, 28);
+
+    // Dibujar la tabla
+    doc.autoTable({
+        startY: 35,
+        head: [columnas],
+        body: filas,
+        theme: 'grid',
+        headStyles: { 
+            fillColor: [255, 102, 0], // Fondo del encabezado naranja
+            textColor: [255, 255, 255], 
+            fontStyle: 'bold' 
+        },
+        styles: { 
+            fontSize: 10, 
+            textColor: [0, 0, 0], // Texto negro por defecto para todo
+            cellPadding: 4 
+        },
+        didParseCell: function (data) {
+            // Reglas de colores solicitadas por Aldi solo para el contenido (body)
+            if (data.section === 'body') {
+                const nombreColumna = columnas[data.column.index];
+                
+                // Precio de Entrada / Costo en VERDE
+                if (nombreColumna === "Precio Costo" || nombreColumna === "Costo") {
+                    data.cell.styles.textColor = [40, 167, 69]; 
+                    data.cell.styles.fontStyle = 'bold';
+                }
+                // Precio de Salida / Venta en ROJO
+                if (nombreColumna === "Venta") {
+                    data.cell.styles.textColor = [220, 53, 69]; 
+                    data.cell.styles.fontStyle = 'bold';
+                }
+                // Plataforma en AZUL
+                if (nombreColumna === "Plataforma") {
+                    data.cell.styles.textColor = [0, 123, 255]; 
+                    data.cell.styles.fontStyle = 'bold';
+                }
+            }
+        }
+    });
+
+    // Guardar el archivo en el celular o PC
+    const nombreArchivo = titulo.replace(/ /g, "_").toLowerCase();
+    doc.save(`${nombreArchivo}.pdf`);
+};

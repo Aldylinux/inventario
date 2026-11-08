@@ -7,7 +7,7 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#ff6600">
     <link rel="apple-touch-icon" href="icon-192.png">
-    <link rel="stylesheet" href="style.css?v=12">
+    <link rel="stylesheet" href="style.css?v=13">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
@@ -75,7 +75,6 @@
                     </div>
                     <div class="input-group">
                         <label>Precio de Entrada (COP)</label>
-                        <!-- AQUÍ SE APLICÓ EL FORMATO DE MONEDA -->
                         <input type="text" id="precio_entrada" placeholder="Ej: 850.000" oninput="formatearMoneda(this)" required>
                     </div>
                     <button type="submit" class="btn-primary">Guardar en Inventario</button>
@@ -86,7 +85,11 @@
         <!-- Pestaña: Inventario -->
         <section id="inventario" class="tab-content">
             <div class="card">
-                <h3>Equipos Disponibles</h3>
+                <!-- AQUI SE AÑADIÓ EL BOTÓN DE PDF -->
+                <div class="card-header">
+                    <h3>Equipos Disponibles</h3>
+                    <button class="btn-pdf" onclick="descargarPDF('inventario')"><i class="fas fa-file-pdf"></i> PDF</button>
+                </div>
                 <div class="table-responsive">
                     <table id="tabla-inventario">
                         <thead>
@@ -118,7 +121,6 @@
                         <p id="detalle-costo"></p>
                     </div>
 
-                    <!-- NUEVO: SELECCIÓN DE PLATAFORMA -->
                     <div class="input-group">
                         <label>Plataforma de Pago / Crédito</label>
                         <select id="plataforma_venta" required>
@@ -142,7 +144,11 @@
         <!-- Pestaña: Historial de Ventas -->
         <section id="ventas" class="tab-content">
             <div class="card">
-                <h3>Historial de Equipos Vendidos</h3>
+                <!-- AQUI SE AÑADIÓ EL BOTÓN DE PDF -->
+                <div class="card-header">
+                    <h3>Historial de Equipos Vendidos</h3>
+                    <button class="btn-pdf" onclick="descargarPDF('ventas')"><i class="fas fa-file-pdf"></i> PDF</button>
+                </div>
                 <div class="table-responsive">
                     <table id="tabla-ventas">
                         <thead>
@@ -154,10 +160,14 @@
             </div>
         </section>
 
-        <!-- NUEVA PESTAÑA: Registro Histórico -->
+        <!-- Pestaña: Registro Histórico -->
         <section id="registro" class="tab-content">
             <div class="card">
-                <h3>Registro Histórico Master (Todos los ingresos)</h3>
+                <!-- AQUI SE AÑADIÓ EL BOTÓN DE PDF -->
+                <div class="card-header">
+                    <h3>Registro Histórico Master</h3>
+                    <button class="btn-pdf" onclick="descargarPDF('registro')"><i class="fas fa-file-pdf"></i> PDF</button>
+                </div>
                 <div class="table-responsive">
                     <table id="tabla-registro">
                         <thead>
@@ -179,7 +189,10 @@
         </div>
     </div>
 
+    <!-- Librerías limpias y sin duplicados -->
     <script src="https://unpkg.com/html5-qrcode"></script>
-    <script src="app.js?v=12"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script src="app.js?v=13"></script>
 </body>
 </html>
