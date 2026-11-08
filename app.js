@@ -1,17 +1,13 @@
 // ==========================================
-// 1. FORMATO DE MONEDA EN TIEMPO REAL
+// 1. FORMATO DE MONEDA Y FECHAS
 // ==========================================
 window.formatearMoneda = function(input) {
-    let valor = input.value.replace(/\D/g, ''); // Deja solo los números
-    if (valor === '') {
-        input.value = '';
-        return;
-    }
-    input.value = new Intl.NumberFormat('es-CO').format(valor); // Separa por puntos
+    let valor = input.value.replace(/\D/g, ''); 
+    if (valor === '') { input.value = ''; return; }
+    input.value = new Intl.NumberFormat('es-CO').format(valor); 
 };
-
-// Convierte un número con puntos ("1.300.000") de vuelta a número real (1300000)
 const limpiarNumero = (texto) => parseInt(texto.replace(/\./g, '')) || 0;
+const limpiarFecha = (fecha) => fecha ? fecha.split('T')[0] : ''; // Quita el error T05:00 de Google Sheets
 
 // ==========================================
 // 2. REGISTRO PWA Y MENÚS
@@ -58,7 +54,12 @@ function showTab(tabId, boton) {
     document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
     
-    if (boton) boton.classList.add('active');
+    if (boton) {
+        boton.classList.add('active');
+    } else {
+        const btnActivo = document.querySelector(`.nav-btn[onclick*="${tabId}"]`);
+        if(btnActivo) btnActivo.classList.add('active');
+    }
     if (sidebar && sidebar.classList.contains('open')) toggleMenu();
 }
 
@@ -73,14 +74,13 @@ let registroHistorico = JSON.parse(localStorage.getItem('tecnoaldy_registro')) |
 let equipoEncontrado = null; 
 
 // ¡¡¡PEGA AQUÍ TU ENLACE NUEVO DEL SCRIPT!!!
-const API_URL = "https://script.google.com/macros/s/AKfycbzsuvl2Ptw4TaAOQLm1Jim8Ophka5UAaO4BbISmyFDe5_aKCf38kD1HpH_3fhetxZY3/exec"; 
+const API_URL = "https://script.google.com/macros/s/AKfycbyAA7YCwYfS-br1AZ9MhFocPWLQDk7rDsYnYcOst5Kx0lR8IO6eJUFCTnO536dsTchJ/exec"; 
 
 async function sincronizarDesdeNube() {
-    if (API_URL === "AQUI_PEGA_TU_URL_DE_APPS_SCRIPT") return;
+    if (API_URL === "https://script.google.com/macros/s/AKfycbyAA7YCwYfS-br1AZ9MhFocPWLQDk7rDsYnYcOst5Kx0lR8IO6eJUFCTnO536dsTchJ/exec") return;
     try {
         const respuesta = await fetch(API_URL);
         const datos = await respuesta.json();
-        
         inventario = datos.inventario || [];
         ventas = datos.ventas || [];
         registroHistorico = datos.registro || [];
@@ -96,14 +96,6 @@ function guardarDatosLocales() {
     localStorage.setItem('tecnoaldy_inventario', JSON.stringify(inventario));
     localStorage.setItem('tecnoaldy_ventas', JSON.stringify(ventas));
     localStorage.setItem('tecnoaldy_registro', JSON.stringify(registroHistorico));
-// Llenar el buscador de la pestaña FACTURAS
-    const listaImeisVentas = document.getElementById('lista-imeis-ventas');
-    if (listaImeisVentas) {
-        listaImeisVentas.innerHTML = '';
-        ventas.forEach(venta => {
-            listaImeisVentas.innerHTML += `<option value="${venta.imei}">${venta.modelo}</option>`;
-        });
-    }
 }
 
 function renderizarVistas() {
@@ -111,40 +103,40 @@ function renderizarVistas() {
     const tbodyVentas = document.querySelector('#tabla-ventas tbody');
     const tbodyRegistro = document.querySelector('#tabla-registro tbody');
     const listaImeis = document.getElementById('lista-imeis');
+    const listaImeisVentas = document.getElementById('lista-imeis-ventas');
     
-    // 1. Inventario Actual
     tbodyInventario.innerHTML = '';
     listaImeis.innerHTML = ''; 
     inventario.forEach(equipo => {
         tbodyInventario.innerHTML += `
             <tr>
-                <td>${equipo.fecha}</td><td>${equipo.imei}</td>
+                <td>${limpiarFecha(equipo.fecha)}</td><td>${equipo.imei}</td>
                 <td><strong>${equipo.modelo}</strong></td><td>${equipo.ram}/${equipo.rom}</td>
                 <td>${formatCOP(equipo.precio_entrada)}</td>
             </tr>`;
         listaImeis.innerHTML += `<option value="${equipo.imei}">${equipo.modelo}</option>`;
     });
 
-    // 2. Ventas (Ahora incluye plataforma)
     tbodyVentas.innerHTML = '';
+    if(listaImeisVentas) listaImeisVentas.innerHTML = '';
     ventas.forEach(venta => {
         tbodyVentas.innerHTML += `
             <tr>
-                <td style="font-size: 13px;">${venta.fecha_hora_venta}</td>
+                <td style="font-size: 13px;">${limpiarFecha(venta.fecha_hora_venta)}</td>
                 <td>${venta.imei}</td><td><strong>${venta.modelo}</strong></td>
                 <td>${formatCOP(venta.precio_entrada)}</td><td>${formatCOP(venta.precio_venta)}</td>
                 <td style="color: var(--primary-orange); font-size: 13px;">${venta.plataforma || 'N/A'}</td>
                 <td style="color: #28a745; font-weight: bold;">+ ${formatCOP(venta.ganancia)}</td>
             </tr>`;
+        if(listaImeisVentas) listaImeisVentas.innerHTML += `<option value="${venta.imei}">${venta.modelo}</option>`;
     });
 
-    // 3. Registro Histórico Master
     if(tbodyRegistro) {
         tbodyRegistro.innerHTML = '';
         registroHistorico.forEach(equipo => {
             tbodyRegistro.innerHTML += `
                 <tr>
-                    <td>${equipo.fecha}</td><td>${equipo.imei}</td>
+                    <td>${limpiarFecha(equipo.fecha)}</td><td>${equipo.imei}</td>
                     <td><strong>${equipo.modelo}</strong></td><td>${equipo.ram}/${equipo.rom}</td>
                     <td>${formatCOP(equipo.precio_entrada)}</td>
                 </tr>`;
@@ -227,11 +219,11 @@ document.getElementById('form-ingreso').addEventListener('submit', function(e) {
         modelo: document.getElementById('modelo').value,
         ram: document.getElementById('ram').value,
         rom: document.getElementById('rom').value,
-        precio_entrada: limpiarNumero(document.getElementById('precio_entrada').value) // Limpia puntos para hacer cálculos
+        precio_entrada: limpiarNumero(document.getElementById('precio_entrada').value)
     };
 
     inventario.push(nuevoEquipo);
-    registroHistorico.push(nuevoEquipo); // Lo añade al Master
+    registroHistorico.push(nuevoEquipo);
     
     guardarDatosLocales();
     renderizarVistas();
@@ -268,7 +260,6 @@ document.getElementById('form-venta').addEventListener('submit', function(e) {
     e.preventDefault();
     if (!equipoEncontrado) return;
 
-    // Lee el input limpio de puntos
     const precioVenta = limpiarNumero(document.getElementById('precio_venta').value);
     const plataformaSeleccionada = document.getElementById('plataforma_venta').value;
     
@@ -277,7 +268,7 @@ document.getElementById('form-venta').addEventListener('submit', function(e) {
         ...equipoEncontrado,
         fecha_hora_venta: `${ahora.toLocaleDateString('es-CO')} - ${ahora.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}`,
         precio_venta: precioVenta,
-        plataforma: plataformaSeleccionada, // Guarda la plataforma
+        plataforma: plataformaSeleccionada,
         ganancia: precioVenta - equipoEncontrado.precio_entrada
     };
 
@@ -341,11 +332,11 @@ function onScanSuccess(textoDecodificado) {
 }
 
 document.getElementById('fecha').value = new Date().toISOString().split('T')[0];
+
 // ==========================================
-// 8. GENERADOR DE REPORTES PDF
+// 8. GENERADOR DE REPORTES PDF (TABLAS)
 // ==========================================
 window.descargarPDF = function(tipo) {
-    // Inicializar jsPDF en modo horizontal ('l' = landscape) para que quepan las columnas
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF('l', 'mm', 'a4'); 
 
@@ -353,85 +344,87 @@ window.descargarPDF = function(tipo) {
     let columnas = [];
     let filas = [];
 
-    // Preparamos los datos dependiendo de qué botón oprimió Aldi
     if (tipo === 'inventario') {
         titulo = "Inventario Actual - TecnoAldy";
         columnas = ["Fecha", "IMEI", "Modelo", "RAM/ROM", "Precio Costo"];
         filas = inventario.map(eq => [
-            eq.fecha, eq.imei, eq.modelo, `${eq.ram} / ${eq.rom}`, formatCOP(eq.precio_entrada)
+            limpiarFecha(eq.fecha), eq.imei, eq.modelo, `${eq.ram} / ${eq.rom}`, formatCOP(eq.precio_entrada)
         ]);
     } else if (tipo === 'ventas') {
         titulo = "Historial de Ventas - TecnoAldy";
         columnas = ["Fecha Venta", "IMEI", "Modelo", "Plataforma", "Costo", "Venta", "Ganancia"];
         filas = ventas.map(v => [
-            v.fecha_hora_venta, v.imei, v.modelo, v.plataforma || 'Contado', 
+            limpiarFecha(v.fecha_hora_venta), v.imei, v.modelo, v.plataforma || 'Contado', 
             formatCOP(v.precio_entrada), formatCOP(v.precio_venta), formatCOP(v.ganancia)
         ]);
     } else if (tipo === 'registro') {
         titulo = "Registro Histórico Master - TecnoAldy";
         columnas = ["Fecha Ingreso", "IMEI", "Modelo", "RAM/ROM", "Precio Costo"];
         filas = registroHistorico.map(eq => [
-            eq.fecha, eq.imei, eq.modelo, `${eq.ram} / ${eq.rom}`, formatCOP(eq.precio_entrada)
+            limpiarFecha(eq.fecha), eq.imei, eq.modelo, `${eq.ram} / ${eq.rom}`, formatCOP(eq.precio_entrada)
         ]);
     }
 
-    // Dibujar el título y la fecha en el PDF
     doc.setFontSize(18);
-    doc.setTextColor(255, 102, 0); // Título en naranja TecnoAldy
+    doc.setTextColor(255, 102, 0); 
     doc.text(titulo, 14, 20);
-    
     doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100); // Gris oscuro
+    doc.setTextColor(100, 100, 100); 
     doc.text(`Reporte generado el: ${new Date().toLocaleString('es-CO')}`, 14, 28);
 
-    // Dibujar la tabla
     doc.autoTable({
         startY: 35,
         head: [columnas],
         body: filas,
         theme: 'grid',
-        headStyles: { 
-            fillColor: [255, 102, 0], // Fondo del encabezado naranja
-            textColor: [255, 255, 255], 
-            fontStyle: 'bold' 
-        },
-        styles: { 
-            fontSize: 10, 
-            textColor: [0, 0, 0], // Texto negro por defecto para todo
-            cellPadding: 4 
-        },
+        headStyles: { fillColor: [255, 102, 0], textColor: [255, 255, 255], fontStyle: 'bold' },
+        styles: { fontSize: 10, textColor: [0, 0, 0], cellPadding: 4 },
         didParseCell: function (data) {
-            // Reglas de colores solicitadas por Aldi solo para el contenido (body)
             if (data.section === 'body') {
                 const nombreColumna = columnas[data.column.index];
-                
-                // Precio de Entrada / Costo en VERDE
-                if (nombreColumna === "Precio Costo" || nombreColumna === "Costo") {
-                    data.cell.styles.textColor = [40, 167, 69]; 
-                    data.cell.styles.fontStyle = 'bold';
-                }
-                // Precio de Salida / Venta en ROJO
-                if (nombreColumna === "Venta") {
-                    data.cell.styles.textColor = [220, 53, 69]; 
-                    data.cell.styles.fontStyle = 'bold';
-                }
-                // Plataforma en AZUL
-                if (nombreColumna === "Plataforma") {
-                    data.cell.styles.textColor = [0, 123, 255]; 
-                    data.cell.styles.fontStyle = 'bold';
-                }
+                if (nombreColumna === "Precio Costo" || nombreColumna === "Costo") { data.cell.styles.textColor = [40, 167, 69]; data.cell.styles.fontStyle = 'bold'; }
+                if (nombreColumna === "Venta") { data.cell.styles.textColor = [220, 53, 69]; data.cell.styles.fontStyle = 'bold'; }
+                if (nombreColumna === "Plataforma") { data.cell.styles.textColor = [0, 123, 255]; data.cell.styles.fontStyle = 'bold'; }
             }
         }
     });
 
-    // Guardar el archivo en el celular o PC
     const nombreArchivo = titulo.replace(/ /g, "_").toLowerCase();
     doc.save(`${nombreArchivo}.pdf`);
 };
+
 // ==========================================
-// 9. MÓDULO DE FACTURACIÓN (PDF A CLIENTES)
+// 9. MÓDULO DE FACTURACIÓN Y COMPARTIR
 // ==========================================
 let equipoVendidoEncontrado = null;
+
+// Lógica de Pizarra de Firma del Cliente
+const canvasFirma = document.getElementById('firma_cliente');
+let ctxFirma = canvasFirma ? canvasFirma.getContext('2d') : null;
+let dibujando = false;
+
+if (canvasFirma) {
+    const obtenerPos = (e) => {
+        const rect = canvasFirma.getBoundingClientRect();
+        const clienteX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clienteY = e.touches ? e.touches[0].clientY : e.clientY;
+        return { x: (clienteX - rect.left) * (canvasFirma.width / rect.width), y: (clienteY - rect.top) * (canvasFirma.height / rect.height) };
+    };
+
+    const iniciar = (e) => { e.preventDefault(); dibujando = true; const pos = obtenerPos(e); ctxFirma.beginPath(); ctxFirma.moveTo(pos.x, pos.y); };
+    const dibujar = (e) => { if (!dibujando) return; e.preventDefault(); const pos = obtenerPos(e); ctxFirma.lineTo(pos.x, pos.y); ctxFirma.strokeStyle = '#000000'; ctxFirma.lineWidth = 2; ctxFirma.stroke(); };
+    const detener = () => { dibujando = false; ctxFirma.closePath(); };
+
+    canvasFirma.addEventListener('mousedown', iniciar);
+    canvasFirma.addEventListener('mousemove', dibujar);
+    canvasFirma.addEventListener('mouseup', detener);
+    canvasFirma.addEventListener('mouseleave', detener);
+    canvasFirma.addEventListener('touchstart', iniciar, { passive: false }); 
+    canvasFirma.addEventListener('touchmove', dibujar, { passive: false });
+    canvasFirma.addEventListener('touchend', detener);
+    
+    window.limpiarFirma = () => { ctxFirma.clearRect(0, 0, canvasFirma.width, canvasFirma.height); };
+}
 
 const inputBuscarFactura = document.getElementById('buscar_imei_factura');
 if (inputBuscarFactura) {
@@ -462,34 +455,41 @@ if (formFactura) {
         const nombre = document.getElementById('cliente_nombre').value.toUpperCase();
         const cedula = document.getElementById('cliente_cedula').value;
         const telefono = document.getElementById('cliente_telefono').value;
+        const vendedor = document.getElementById('vendedor_nombre').value;
         
-        const btnGenerar = document.getElementById('btn-generar-factura');
-        const textoOriginalBtn = btnGenerar.innerHTML;
-        btnGenerar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando...';
-        btnGenerar.disabled = true;
+        // Capturar los campos nuevos opcionales de financiación
+        const cuotas = document.getElementById('factura_cuotas').value;
+        const valorCuota = document.getElementById('factura_valor_cuota').value;
+        const frecuencia = document.getElementById('factura_frecuencia').value;
 
-        // Pequeño timeout para que el DOM se actualice antes de procesar el PDF pesado
-        setTimeout(() => {
-            generarFacturaClientePDF(equipoVendidoEncontrado, nombre, cedula, telefono);
-            
-            this.reset();
-            document.getElementById('info-equipo-factura').style.display = 'none';
-            btnGenerar.innerHTML = textoOriginalBtn;
-            equipoVendidoEncontrado = null;
-        }, 300);
+        const firmaDatos = canvasFirma.toDataURL('image/png'); 
+        
+        generarFacturaClientePDF(equipoVendidoEncontrado, nombre, cedula, telefono, vendedor, firmaDatos, cuotas, valorCuota, frecuencia);
+        
+        this.reset();
+        limpiarFirma();
+        document.getElementById('info-equipo-factura').style.display = 'none';
+        document.getElementById('btn-generar-factura').disabled = true;
+        equipoVendidoEncontrado = null;
     });
 }
 
-function generarFacturaClientePDF(equipo, cliente, cedula, telefono) {
+function generarFacturaClientePDF(equipo, cliente, cedula, telefono, vendedor, firmaClienteBase64, cuotas, valorCuota, frecuencia) {
     try {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('p', 'mm', 'a4'); 
 
         const numeroFactura = "FAC-" + Math.floor(Date.now() / 10000).toString(); 
 
-        // --- ENCABEZADO TECNOALDY ---
+        // LOGO TECNOALDY
+        const logoImg = document.querySelector('.bg-logo img');
+        if (logoImg) {
+            try { doc.addImage(logoImg, 'PNG', 14, 12, 28, 28); } 
+            catch(err) { console.log('Logo no renderizado', err); }
+        }
+
         doc.setFontSize(22);
-        doc.setTextColor(255, 102, 0); 
+        doc.setTextColor(128, 0, 128); 
         doc.text("TECNOALDY", 105, 18, { align: 'center' });
         
         doc.setFontSize(10);
@@ -498,28 +498,26 @@ function generarFacturaClientePDF(equipo, cliente, cedula, telefono) {
         doc.text("Cra 7 # 7-37 Camellón, Fresno - Tolima", 105, 29, { align: 'center' });
         doc.text("Tel: 302 736 4763", 105, 34, { align: 'center' });
 
-        // --- DATOS FACTURA ---
         doc.setFontSize(12);
         doc.setTextColor(0, 0, 0);
-        doc.text(`FACTURA DE VENTA: ${numeroFactura}`, 14, 45);
-        doc.text(`FECHA DE COMPRA: ${equipo.fecha_hora_venta}`, 14, 52);
+        doc.text(`FACTURA DE VENTA: ${numeroFactura}`, 14, 50);
+        doc.text(`FECHA DE COMPRA: ${limpiarFecha(equipo.fecha_hora_venta)}`, 14, 57);
 
-        // --- DATOS CLIENTE ---
         doc.setDrawColor(255, 102, 0);
         doc.setLineWidth(0.5);
-        doc.line(14, 57, 196, 57); 
+        doc.line(14, 62, 196, 62); 
         
         doc.setFontSize(11);
-        doc.text("DATOS DEL CLIENTE:", 14, 65);
+        doc.text("DATOS DEL CLIENTE:", 14, 70);
         doc.setFontSize(10);
         doc.setTextColor(50, 50, 50);
-        doc.text(`Nombre: ${cliente}`, 14, 72);
-        doc.text(`C.C / NIT: ${cedula}`, 14, 78);
-        doc.text(`Teléfono: ${telefono}`, 14, 84);
+        doc.text(`Nombre: ${cliente}`, 14, 77);
+        doc.text(`C.C / NIT: ${cedula}`, 14, 83);
+        doc.text(`Teléfono: ${telefono}`, 14, 89);
 
-        // --- TABLA EQUIPO ---
+        // TABLA PRINCIPAL DEL EQUIPO
         doc.autoTable({
-            startY: 92,
+            startY: 97,
             head: [["Cant.", "Descripción del Equipo", "IMEI", "Plataforma", "Valor Total"]],
             body: [
                 ["1", equipo.modelo, equipo.imei, equipo.plataforma || 'Contado', formatCOP(equipo.precio_venta)]
@@ -529,8 +527,29 @@ function generarFacturaClientePDF(equipo, cliente, cedula, telefono) {
             styles: { fontSize: 10, cellPadding: 5 }
         });
 
-        // --- TÉRMINOS GARANTÍA ---
-        const finalY = doc.lastAutoTable.finalY + 15;
+        let finalY = doc.lastAutoTable.finalY + 5;
+
+        // --- RECUADRO DE FINANCIACIÓN (Solo aparece si llenaste los campos) ---
+        if (cuotas || valorCuota || frecuencia) {
+            doc.setDrawColor(200, 200, 200);
+            doc.setFillColor(245, 245, 245);
+            doc.rect(14, finalY, 182, 12, 'FD'); 
+            
+            doc.setFontSize(9);
+            doc.setTextColor(0, 0, 0);
+            doc.setFont(undefined, "bold");
+            doc.text("DETALLE DE FINANCIACIÓN:", 18, finalY + 7);
+            
+            doc.setFont(undefined, "normal");
+            let textoCredito = `N° Cuotas: ${cuotas || 'N/A'}    |    Valor Cuota: ${valorCuota ? '$'+valorCuota : 'N/A'}    |    Frecuencia: ${frecuencia ? 'Cada ' + frecuencia + ' días' : 'N/A'}`;
+            doc.text(textoCredito, 70, finalY + 7);
+            
+            finalY += 20;
+        } else {
+            finalY += 10;
+        }
+
+        // TÉRMINOS GARANTÍA
         doc.setFontSize(11);
         doc.setTextColor(220, 53, 69); 
         doc.text("TÉRMINOS Y CONDICIONES DE GARANTÍA", 14, finalY);
@@ -546,58 +565,51 @@ function generarFacturaClientePDF(equipo, cliente, cedula, telefono) {
             "   plazo máximo de 20 días hábiles. No hay garantía por bloqueo de NO REGISTRO."
         ];
         let yPos = finalY + 7;
-        terminos.forEach(linea => {
-            doc.text(linea, 14, yPos);
-            yPos += 5;
-        });
+        terminos.forEach(linea => { doc.text(linea, 14, yPos); yPos += 5; });
 
-        // --- FIRMAS ---
+        // ZONA DE FIRMAS
         doc.setDrawColor(0, 0, 0);
         doc.setLineWidth(0.3);
         
-        doc.line(20, yPos + 30, 80, yPos + 30);
+        // Firma Vendedor
+        doc.setFont("times", "italic");
+        doc.setFontSize(16);
+        doc.setTextColor(0, 0, 150); 
+        doc.text(vendedor, 50, yPos + 27, { align: 'center' });
+        doc.setFont("helvetica", "normal");
         doc.setFontSize(10);
+        doc.setTextColor(0, 0, 0);
+        doc.line(20, yPos + 30, 80, yPos + 30);
         doc.text("Firma Vendedor Autorizado", 50, yPos + 35, { align: 'center' });
         doc.text("TECNOALDY", 50, yPos + 40, { align: 'center' });
 
+        // Firma Cliente
+        doc.addImage(firmaClienteBase64, 'PNG', 130, yPos - 5, 60, 32); 
         doc.line(130, yPos + 30, 190, yPos + 30);
         doc.text("Firma Cliente / Comprador", 160, yPos + 35, { align: 'center' });
-        doc.setFontType("bold");
+        doc.setFont(undefined, 'bold');
         doc.text(cliente, 160, yPos + 40, { align: 'center' }); 
-        doc.setFontType("normal");
+        doc.setFont(undefined, 'normal');
         doc.text(`C.C: ${cedula}`, 160, yPos + 45, { align: 'center' }); 
 
-        // ===============================================
-        // MODO COMPARTIR (WHATSAPP/TELEGRAM) NATIVO PARA MÓVILES
-        // ===============================================
         const nombreArchivo = `Factura_${cliente.replace(/ /g, "_")}_${equipo.modelo}.pdf`;
-        
-        // 1. Extraemos el PDF en bruto (Blob)
         const pdfBlob = doc.output('blob');
         
-        // 2. Verificamos si el navegador/celular soporta la función "Compartir" con archivos
         if (navigator.canShare && navigator.canShare({ files: [new File([pdfBlob], nombreArchivo, { type: 'application/pdf' })] })) {
             const archivoCompartir = new File([pdfBlob], nombreArchivo, { type: 'application/pdf' });
-            
             navigator.share({
                 title: 'Factura TecnoAldy',
                 text: `Hola ${cliente}, adjunto tu factura de compra del ${equipo.modelo}. ¡Gracias por confiar en TecnoAldy!`,
                 files: [archivoCompartir]
-            })
-            .then(() => console.log('Factura compartida con éxito'))
-            .catch((error) => console.log('Error al compartir', error));
-            
+            }).catch(err => console.log('Compartir cancelado.'));
         } else {
-            // 3. Si es PC o no soporta compartir, hace la descarga tradicional
             doc.save(nombreArchivo);
-            
-            // Y abrimos el visor del navegador por si acaso
             const pdfUrl = URL.createObjectURL(pdfBlob);
             window.open(pdfUrl, '_blank');
         }
         
     } catch (error) {
         console.error("Error crítico generando el PDF:", error);
-        alert("Ocurrió un error creando el PDF. Intenta de nuevo.");
+        alert("Ocurrió un error creando el PDF. Revisa la consola.");
     }
 }

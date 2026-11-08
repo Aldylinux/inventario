@@ -34,11 +34,10 @@
         </div>
         <nav>
             <button class="nav-btn active" onclick="showTab('nuevo', this)"><i class="fas fa-plus"></i> Ingresar Equipo</button>
-            <button class="nav-btn" onclick="showTab('inventario', this)"><i class="fas fa-box"></i> Inventario Actual</button>
             <button class="nav-btn" onclick="showTab('nueva-venta', this)"><i class="fas fa-shopping-cart"></i> Ingresar Venta</button>
+            <button class="nav-btn" onclick="showTab('inventario', this)"><i class="fas fa-box"></i> Inventario Actual</button>
             <button class="nav-btn" onclick="showTab('ventas', this)"><i class="fas fa-coins"></i> Historial Ventas</button>
             <button class="nav-btn" onclick="showTab('registro', this)"><i class="fas fa-history"></i> Registro Histórico</button>
-            <!-- NUEVO BOTÓN DE FACTURA -->
             <button class="nav-btn" onclick="showTab('factura', this)"><i class="fas fa-file-invoice"></i> Crear Factura</button>
         </nav>
     </div>
@@ -181,6 +180,7 @@
             </div>
         </section>
         <!-- NUEVA PESTAÑA: Crear Factura -->
+        <!-- Pestaña: Crear Factura -->
         <section id="factura" class="tab-content">
             <div class="card form-card">
                 <h3>Generar Factura de Venta</h3>
@@ -214,6 +214,45 @@
                             <input type="number" id="cliente_telefono" placeholder="Ej: 320..." required>
                         </div>
                     </div>
+
+                    <!-- NUEVOS CAMPOS: FINANCIACIÓN (OPCIONALES) -->
+                    <div class="row">
+                        <div class="input-group">
+                            <label>N° Cuotas</label>
+                            <input type="number" id="factura_cuotas" placeholder="Ej: 4">
+                        </div>
+                        <div class="input-group">
+                            <label>Pago Cuota (COP)</label>
+                            <input type="text" id="factura_valor_cuota" placeholder="Ej: 150.000" oninput="formatearMoneda(this)">
+                        </div>
+                        <div class="input-group">
+                            <label>Frecuencia</label>
+                            <select id="factura_frecuencia">
+                                <option value="">No aplica (Contado)</option>
+                                <option value="15">15 Días (Quincenal)</option>
+                                <option value="30">30 Días (Mensual)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- NUEVO: SELECTOR DE VENDEDOR Y FIRMA DEL CLIENTE -->
+                    <div class="row">
+                        <div class="input-group">
+                            <label>Vendedor Autorizado</label>
+                            <select id="vendedor_nombre" required>
+                                <option value="Aldibier Rivera">Aldibier Rivera</option>
+                                <option value="Duberney Cardona">Duberney Cardona</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Firma del Cliente (Dibujar con el dedo)</label>
+                        <div style="border: 2px dashed var(--primary-orange); border-radius: 6px; background: #ffffff; touch-action: none; overflow: hidden;">
+                            <canvas id="firma_cliente" width="400" height="150" style="width: 100%; display: block;"></canvas>
+                        </div>
+                        <button type="button" class="btn-scan" onclick="limpiarFirma()" style="margin-top: 5px; justify-content: center;"><i class="fas fa-eraser"></i> Borrar Firma</button>
+                    </div>
+
                     <button type="submit" class="btn-primary" id="btn-generar-factura" disabled><i class="fas fa-file-pdf"></i> Generar Factura en PDF</button>
                 </form>
             </div>
