@@ -10,11 +10,12 @@
     <meta name="theme-color" content="#ff6600">
     <link rel="apple-touch-icon" href="icon-192.png">
 
-    <link rel="stylesheet" href="style.css?v=4">
+    <!-- CAMBIO v10 PARA FORZAR ACTUALIZACIÓN -->
+    <link rel="stylesheet" href="style.css?v=10">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
-    <!-- Banner de Instalación de la App -->
+    <!-- Banner PWA -->
     <div id="install-banner" class="install-banner" style="display: none;">
         <div class="install-info">
             <img src="icon-192.png" alt="TecnoAldy App" class="install-icon">
@@ -27,22 +28,21 @@
         <button id="btn-cerrar-banner" class="close-banner">&times;</button>
     </div>
 
-    <!-- Barra Superior para Móviles (Menú Hamburguesa) -->
+    <!-- Barra Móvil -->
     <div class="mobile-header">
         <div class="logo-mobile">TecnoAldy</div>
         <button id="menu-toggle" class="hamburger-btn">
             <i class="fas fa-bars"></i>
         </button>
     </div>
-
-    <!-- Fondo oscuro cuando el menú está abierto en móvil -->
     <div id="mobile-overlay" class="overlay"></div>
 
-    <!-- Logo de Fondo con efecto Neón -->
+    <!-- Fondo Neón -->
     <div class="bg-logo">
         <img src="logo.png" alt="TecnoAldy Fondo">
     </div>
 
+    <!-- Menú Lateral -->
     <div class="sidebar">
         <div class="logo-container">
             <h2>TecnoAldy</h2>
@@ -71,7 +71,11 @@
                         <label>IMEI del Equipo</label>
                         <div class="imei-scanner-group">
                             <input type="number" id="imei" placeholder="Ej: 359123..." required>
-                            <button type="button" class="btn-scan" onclick="abrirScanner('imei')"><i class="fas fa-barcode"></i> Escanear</button>
+                            
+                            <!-- ARO RGB OCULTO POR DEFECTO -->
+                            <div id="loading-imei" class="spinner-rgb" style="display: none;"></div>
+                            
+                            <button type="button" class="btn-scan" id="btn-scan-imei" onclick="abrirScanner('imei')"><i class="fas fa-barcode"></i> Escanear</button>
                         </div>
                     </div>
 
@@ -125,15 +129,12 @@
                 <h3>Registrar Salida / Venta</h3>
                 <form id="form-venta">
                     <div class="input-group">
-                        <label>IMEI del Equipo</label>
+                        <label>Buscar Equipo (Por Modelo o escanear IMEI)</label>
                         <div class="imei-scanner-group">
-                            <input type="number" id="imei" placeholder="Ej: 359123..." required>
-                            
-                            <!-- Bolita RGB oculta por defecto -->
-                            <div id="loading-imei" class="spinner-rgb" style="display: none;"></div>
-                            
-                            <button type="button" class="btn-scan" id="btn-scan-imei" onclick="abrirScanner('imei')"><i class="fas fa-barcode"></i> Escanear</button>
+                            <input type="text" id="buscar_imei" list="lista-imeis" placeholder="Escribe o escanea..." required autocomplete="off">
+                            <button type="button" class="btn-scan" onclick="abrirScanner('buscar_imei')"><i class="fas fa-barcode"></i> Escanear</button>
                         </div>
+                        <datalist id="lista-imeis"></datalist>
                     </div>
                     
                     <div id="info-equipo-venta" class="info-box" style="display: none;">
@@ -174,17 +175,17 @@
         </section>
     </main>
 
-    <!-- Modal para el Escáner -->
+    <!-- Modal para el Escáner Centrado -->
     <div id="scanner-modal" class="modal">
         <div class="modal-content">
             <span class="close-modal" onclick="cerrarScanner()">&times;</span>
-            <h3>Enfoca el Código de Barras / QR</h3>
+            <h3 style="color: var(--primary-orange); margin-bottom: 10px;">Escaneando...</h3>
             <div id="reader"></div>
         </div>
     </div>
 
-    <!-- Librerías y Scripts -->
+    <!-- Librerías y Scripts con versión 10 -->
     <script src="https://unpkg.com/html5-qrcode"></script>
-    <script src="app.js?v=4"></script>
+    <script src="app.js?v=10"></script>
 </body>
 </html>
