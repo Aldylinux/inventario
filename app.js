@@ -7,7 +7,7 @@ window.formatearMoneda = function(input) {
     input.value = new Intl.NumberFormat('es-CO').format(valor); 
 };
 const limpiarNumero = (texto) => parseInt(texto.replace(/\./g, '')) || 0;
-const limpiarFecha = (fecha) => fecha ? fecha.split('T')[0] : ''; // Quita el error T05:00 de Google Sheets
+const limpiarFecha = (fecha) => fecha ? fecha.split('T')[0] : '';
 
 // ==========================================
 // 2. REGISTRO PWA Y MENÚS
@@ -73,11 +73,11 @@ let ventas = JSON.parse(localStorage.getItem('tecnoaldy_ventas')) || [];
 let registroHistorico = JSON.parse(localStorage.getItem('tecnoaldy_registro')) || inventario.slice(); 
 let equipoEncontrado = null; 
 
-// ¡¡¡PEGA AQUÍ TU ENLACE NUEVO DEL SCRIPT!!!
+// URL de tu base de datos en Google Sheets
 const API_URL = "https://script.google.com/macros/s/AKfycbyAA7YCwYfS-br1AZ9MhFocPWLQDk7rDsYnYcOst5Kx0lR8IO6eJUFCTnO536dsTchJ/exec"; 
 
 async function sincronizarDesdeNube() {
-    if (API_URL === "https://script.google.com/macros/s/AKfycbyAA7YCwYfS-br1AZ9MhFocPWLQDk7rDsYnYcOst5Kx0lR8IO6eJUFCTnO536dsTchJ/exec") return;
+    if (!API_URL || API_URL.includes("AQUI_PEGA")) return;
     try {
         const respuesta = await fetch(API_URL);
         const datos = await respuesta.json();
@@ -230,7 +230,7 @@ document.getElementById('form-ingreso').addEventListener('submit', function(e) {
     this.reset();
     showTab('inventario'); 
 
-    if(API_URL !== "AQUI_PEGA_TU_URL_DE_APPS_SCRIPT") {
+    if(API_URL && !API_URL.includes("AQUI_PEGA")) {
         fetch(API_URL, {
             method: 'POST',
             body: JSON.stringify({ accion: 'agregar', equipo: nuevoEquipo }),
@@ -264,6 +264,7 @@ document.getElementById('form-venta').addEventListener('submit', function(e) {
     const plataformaSeleccionada = document.getElementById('plataforma_venta').value;
     
     const ahora = new Date();
+    // Corrección crítica: Todo en una sola línea sin guiones raros
     const nuevaVenta = {
         ...equipoEncontrado,
         fecha_hora_venta: `${ahora.toLocaleDateString('es-CO')} - ${ahora.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}`,
@@ -283,7 +284,7 @@ document.getElementById('form-venta').addEventListener('submit', function(e) {
     equipoEncontrado = null;
     showTab('ventas');
 
-    if(API_URL !== "AQUI_PEGA_TU_URL_DE_APPS_SCRIPT") {
+    if(API_URL && !API_URL.includes("AQUI_PEGA")) {
         fetch(API_URL, {
             method: 'POST',
             body: JSON.stringify({ accion: 'vender', venta: nuevaVenta }),
@@ -394,11 +395,10 @@ window.descargarPDF = function(tipo) {
 };
 
 // ==========================================
-// 9. MÓDULO DE FACTURACIÓN Y COMPARTIR
+// 9. MÓDULO DE FACTURACIÓN Y COMPARTIR (OPTIMIZADO Y LIGERO)
 // ==========================================
 let equipoVendidoEncontrado = null;
 
-// Lógica de Pizarra de Firma del Cliente
 const canvasFirma = document.getElementById('firma_cliente');
 let ctxFirma = canvasFirma ? canvasFirma.getContext('2d') : null;
 let dibujando = false;
@@ -423,7 +423,11 @@ if (canvasFirma) {
     canvasFirma.addEventListener('touchmove', dibujar, { passive: false });
     canvasFirma.addEventListener('touchend', detener);
     
-    window.limpiarFirma = () => { ctxFirma.clearRect(0, 0, canvasFirma.width, canvasFirma.height); };
+    window.limpiarFirma = () => { 
+        ctxFirma.fillStyle = "#ffffff"; 
+        ctxFirma.fillRect(0, 0, canvasFirma.width, canvasFirma.height); 
+    };
+    limpiarFirma(); 
 }
 
 const inputBuscarFactura = document.getElementById('buscar_imei_factura');
@@ -457,12 +461,11 @@ if (formFactura) {
         const telefono = document.getElementById('cliente_telefono').value;
         const vendedor = document.getElementById('vendedor_nombre').value;
         
-        // Capturar los campos nuevos opcionales de financiación
-        const cuotas = document.getElementById('factura_cuotas').value;
-        const valorCuota = document.getElementById('factura_valor_cuota').value;
-        const frecuencia = document.getElementById('factura_frecuencia').value;
+        const cuotas = document.getElementById('factura_cuotas') ? document.getElementById('factura_cuotas').value : '';
+        const valorCuota = document.getElementById('factura_valor_cuota') ? document.getElementById('factura_valor_cuota').value : '';
+        const frecuencia = document.getElementById('factura_frecuencia') ? document.getElementById('factura_frecuencia').value : '';
 
-        const firmaDatos = canvasFirma.toDataURL('image/png'); 
+        const firmaDatos = canvasFirma.toDataURL('image/jpeg', 0.6); 
         
         generarFacturaClientePDF(equipoVendidoEncontrado, nombre, cedula, telefono, vendedor, firmaDatos, cuotas, valorCuota, frecuencia);
         
@@ -481,22 +484,33 @@ function generarFacturaClientePDF(equipo, cliente, cedula, telefono, vendedor, f
 
         const numeroFactura = "FAC-" + Math.floor(Date.now() / 10000).toString(); 
 
-        // LOGO TECNOALDY
         const logoImg = document.querySelector('.bg-logo img');
         if (logoImg) {
-            try { doc.addImage(logoImg, 'PNG', 14, 12, 28, 28); } 
+            try { 
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = 200; tempCanvas.height = 200;
+                const tCtx = tempCanvas.getContext('2d');
+                tCtx.fillStyle = "#ffffff";
+                tCtx.fillRect(0, 0, 200, 200);
+                tCtx.drawImage(logoImg, 0, 0, 200, 200);
+                const logoComprimido = tempCanvas.toDataURL('image/jpeg', 0.6);
+                doc.addImage(logoComprimido, 'JPEG', 14, 12, 28, 28, 'logo', 'FAST'); 
+            } 
             catch(err) { console.log('Logo no renderizado', err); }
         }
 
-        doc.setFontSize(22);
+        // Diseño corregido: Fuente gruesa y color morado para la marca
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(26);
         doc.setTextColor(128, 0, 128); 
-        doc.text("TECNOALDY", 105, 18, { align: 'center' });
+        doc.text("TECNOALDY", 105, 20, { align: 'center' });
         
+        doc.setFont("helvetica", "normal");
         doc.setFontSize(10);
         doc.setTextColor(100, 100, 100);
-        doc.text("NIT: 24728906-0", 105, 24, { align: 'center' });
-        doc.text("Cra 7 # 7-37 Camellón, Fresno - Tolima", 105, 29, { align: 'center' });
-        doc.text("Tel: 302 736 4763", 105, 34, { align: 'center' });
+        doc.text("NIT: 24728906-0", 105, 26, { align: 'center' });
+        doc.text("Cra 7 # 7-37 Camellón, Fresno - Tolima", 105, 31, { align: 'center' });
+        doc.text("Tel: 302 736 4763", 105, 36, { align: 'center' });
 
         doc.setFontSize(12);
         doc.setTextColor(0, 0, 0);
@@ -515,7 +529,6 @@ function generarFacturaClientePDF(equipo, cliente, cedula, telefono, vendedor, f
         doc.text(`C.C / NIT: ${cedula}`, 14, 83);
         doc.text(`Teléfono: ${telefono}`, 14, 89);
 
-        // TABLA PRINCIPAL DEL EQUIPO
         doc.autoTable({
             startY: 97,
             head: [["Cant.", "Descripción del Equipo", "IMEI", "Plataforma", "Valor Total"]],
@@ -529,7 +542,6 @@ function generarFacturaClientePDF(equipo, cliente, cedula, telefono, vendedor, f
 
         let finalY = doc.lastAutoTable.finalY + 5;
 
-        // --- RECUADRO DE FINANCIACIÓN (Solo aparece si llenaste los campos) ---
         if (cuotas || valorCuota || frecuencia) {
             doc.setDrawColor(200, 200, 200);
             doc.setFillColor(245, 245, 245);
@@ -549,7 +561,6 @@ function generarFacturaClientePDF(equipo, cliente, cedula, telefono, vendedor, f
             finalY += 10;
         }
 
-        // TÉRMINOS GARANTÍA
         doc.setFontSize(11);
         doc.setTextColor(220, 53, 69); 
         doc.text("TÉRMINOS Y CONDICIONES DE GARANTÍA", 14, finalY);
@@ -567,11 +578,9 @@ function generarFacturaClientePDF(equipo, cliente, cedula, telefono, vendedor, f
         let yPos = finalY + 7;
         terminos.forEach(linea => { doc.text(linea, 14, yPos); yPos += 5; });
 
-        // ZONA DE FIRMAS
         doc.setDrawColor(0, 0, 0);
         doc.setLineWidth(0.3);
         
-        // Firma Vendedor
         doc.setFont("times", "italic");
         doc.setFontSize(16);
         doc.setTextColor(0, 0, 150); 
@@ -583,8 +592,7 @@ function generarFacturaClientePDF(equipo, cliente, cedula, telefono, vendedor, f
         doc.text("Firma Vendedor Autorizado", 50, yPos + 35, { align: 'center' });
         doc.text("TECNOALDY", 50, yPos + 40, { align: 'center' });
 
-        // Firma Cliente
-        doc.addImage(firmaClienteBase64, 'PNG', 130, yPos - 5, 60, 32); 
+        doc.addImage(firmaClienteBase64, 'JPEG', 130, yPos - 5, 60, 32, 'firma', 'FAST'); 
         doc.line(130, yPos + 30, 190, yPos + 30);
         doc.text("Firma Cliente / Comprador", 160, yPos + 35, { align: 'center' });
         doc.setFont(undefined, 'bold');
