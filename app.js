@@ -1,10 +1,23 @@
 // ==========================================
-// 1. REGISTRO PWA Y SERVICE WORKER
+// 1. FORMATO DE MONEDA EN TIEMPO REAL
+// ==========================================
+window.formatearMoneda = function(input) {
+    let valor = input.value.replace(/\D/g, ''); // Deja solo los números
+    if (valor === '') {
+        input.value = '';
+        return;
+    }
+    input.value = new Intl.NumberFormat('es-CO').format(valor); // Separa por puntos
+};
+
+// Convierte un número con puntos ("1.300.000") de vuelta a número real (1300000)
+const limpiarNumero = (texto) => parseInt(texto.replace(/\./g, '')) || 0;
+
+// ==========================================
+// 2. REGISTRO PWA Y MENÚS
 // ==========================================
 if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch(err => console.log(err));
-    });
+    window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(err => console.log(err)));
 }
 
 let eventoInstalacion = null;
@@ -29,9 +42,6 @@ if(btnInstalar) {
 const btnCerrarBanner = document.getElementById('btn-cerrar-banner');
 if(btnCerrarBanner) btnCerrarBanner.addEventListener('click', () => installBanner.style.display = 'none');
 
-// ==========================================
-// 2. MENÚ MÓVIL
-// ==========================================
 const menuToggle = document.getElementById('menu-toggle');
 const sidebar = document.querySelector('.sidebar');
 const overlay = document.getElementById('mobile-overlay');
@@ -43,98 +53,101 @@ function toggleMenu() {
 if(menuToggle) menuToggle.addEventListener('click', toggleMenu);
 if(overlay) overlay.addEventListener('click', toggleMenu);
 
-// ==========================================
-// 3. PESTAÑAS
-// ==========================================
 function showTab(tabId, boton) {
     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
     
     if (boton) boton.classList.add('active');
-    else {
-        const botones = document.querySelectorAll('.nav-btn');
-        if(tabId === 'inventario') botones[1].classList.add('active');
-        if(tabId === 'ventas') botones[3].classList.add('active');
-    }
     if (sidebar && sidebar.classList.contains('open')) toggleMenu();
 }
 
 const formatCOP = (num) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(num);
 
 // ==========================================
-// 4. BASES DE DATOS LOCALES Y GOOGLE SHEETS
+// 3. BASES DE DATOS LOCALES Y GOOGLE SHEETS
 // ==========================================
 let inventario = JSON.parse(localStorage.getItem('tecnoaldy_inventario')) || [];
 let ventas = JSON.parse(localStorage.getItem('tecnoaldy_ventas')) || [];
+let registroHistorico = JSON.parse(localStorage.getItem('tecnoaldy_registro')) || inventario.slice(); 
 let equipoEncontrado = null; 
 
-// ¡PEGA AQUÍ TU ENLACE!
-const API_URL = "https://script.google.com/macros/s/AKfycbzRxiC9YOdQLh8Epn9rqURvAyL_NiQ7h6rQYDxBimHuh0tjYlM6QcekPTelvByg1_c1/exec"; 
+// ¡¡¡PEGA AQUÍ TU ENLACE NUEVO DEL SCRIPT!!!
+const API_URL = "https://script.google.com/macros/s/AKfycbzsuvl2Ptw4TaAOQLm1Jim8Ophka5UAaO4BbISmyFDe5_aKCf38kD1HpH_3fhetxZY3/exec"; 
 
-// Descargar los datos desde Google Sheets al abrir la app
 async function sincronizarDesdeNube() {
     if (API_URL === "AQUI_PEGA_TU_URL_DE_APPS_SCRIPT") return;
     try {
         const respuesta = await fetch(API_URL);
         const datos = await respuesta.json();
         
-        inventario = datos.inventario;
-        ventas = datos.ventas;
+        inventario = datos.inventario || [];
+        ventas = datos.ventas || [];
+        registroHistorico = datos.registro || [];
         guardarDatosLocales();
         renderizarVistas();
     } catch (error) {
         console.log("Error al sincronizar con la nube, usando datos locales:", error);
     }
 }
-sincronizarDesdeNube(); // Ejecutar al cargar la página
+sincronizarDesdeNube();
 
 function guardarDatosLocales() {
     localStorage.setItem('tecnoaldy_inventario', JSON.stringify(inventario));
     localStorage.setItem('tecnoaldy_ventas', JSON.stringify(ventas));
+    localStorage.setItem('tecnoaldy_registro', JSON.stringify(registroHistorico));
 }
 
 function renderizarVistas() {
     const tbodyInventario = document.querySelector('#tabla-inventario tbody');
     const tbodyVentas = document.querySelector('#tabla-ventas tbody');
+    const tbodyRegistro = document.querySelector('#tabla-registro tbody');
     const listaImeis = document.getElementById('lista-imeis');
     
+    // 1. Inventario Actual
     tbodyInventario.innerHTML = '';
     listaImeis.innerHTML = ''; 
     inventario.forEach(equipo => {
         tbodyInventario.innerHTML += `
             <tr>
-                <td>${equipo.fecha}</td>
-                <td>${equipo.imei}</td>
-                <td><strong>${equipo.modelo}</strong></td>
-                <td>${equipo.ram}/${equipo.rom}</td>
+                <td>${equipo.fecha}</td><td>${equipo.imei}</td>
+                <td><strong>${equipo.modelo}</strong></td><td>${equipo.ram}/${equipo.rom}</td>
                 <td>${formatCOP(equipo.precio_entrada)}</td>
-            </tr>
-        `;
+            </tr>`;
         listaImeis.innerHTML += `<option value="${equipo.imei}">${equipo.modelo}</option>`;
     });
 
+    // 2. Ventas (Ahora incluye plataforma)
     tbodyVentas.innerHTML = '';
     ventas.forEach(venta => {
         tbodyVentas.innerHTML += `
             <tr>
                 <td style="font-size: 13px;">${venta.fecha_hora_venta}</td>
-                <td>${venta.imei}</td>
-                <td><strong>${venta.modelo}</strong></td>
-                <td>${formatCOP(venta.precio_entrada)}</td>
-                <td>${formatCOP(venta.precio_venta)}</td>
+                <td>${venta.imei}</td><td><strong>${venta.modelo}</strong></td>
+                <td>${formatCOP(venta.precio_entrada)}</td><td>${formatCOP(venta.precio_venta)}</td>
+                <td style="color: var(--primary-orange); font-size: 13px;">${venta.plataforma || 'N/A'}</td>
                 <td style="color: #28a745; font-weight: bold;">+ ${formatCOP(venta.ganancia)}</td>
-            </tr>
-        `;
+            </tr>`;
     });
+
+    // 3. Registro Histórico Master
+    if(tbodyRegistro) {
+        tbodyRegistro.innerHTML = '';
+        registroHistorico.forEach(equipo => {
+            tbodyRegistro.innerHTML += `
+                <tr>
+                    <td>${equipo.fecha}</td><td>${equipo.imei}</td>
+                    <td><strong>${equipo.modelo}</strong></td><td>${equipo.ram}/${equipo.rom}</td>
+                    <td>${formatCOP(equipo.precio_entrada)}</td>
+                </tr>`;
+        });
+    }
 }
 
 // ==========================================
-// 5. AUTOCOMPLETADO (RED + PLACEHOLDER)
+// 4. AUTOCOMPLETADO IMEI
 // ==========================================
-const tacDB = {
-    "35912345": { modelo: "Samsung Galaxy A54", ram: 8, rom: 256 } 
-};
+const tacDB = { "35912345": { modelo: "Samsung Galaxy A54", ram: 8, rom: 256 } };
 
 async function autocompletarDatosIMEI(imei) {
     const tac = imei.substring(0, 8);
@@ -152,7 +165,6 @@ async function autocompletarDatosIMEI(imei) {
         document.getElementById('rom').value = tacDB[tac].rom;
         document.getElementById('modelo').style.borderColor = "#28a745";
         setTimeout(() => { document.getElementById('modelo').style.borderColor = "var(--border-color)"; }, 1500);
-        
         if(spinner) spinner.style.display = 'none';
         if(btnScan) btnScan.style.display = 'flex';
         return;
@@ -172,9 +184,7 @@ async function autocompletarDatosIMEI(imei) {
         document.getElementById('modelo').value = "";
         document.getElementById('ram').value = "";
         document.getElementById('rom').value = "";
-        document.getElementById('modelo').placeholder = `TAC (${tac}) no hallado en red. Escribe manual...`;
-        document.getElementById('ram').placeholder = `Ej: 8`;
-        document.getElementById('rom').placeholder = `Ej: 256`;
+        document.getElementById('modelo').placeholder = `TAC (${tac}) no hallado en red...`;
         document.getElementById('modelo').style.borderColor = "#ffcc00";
         setTimeout(() => { document.getElementById('modelo').style.borderColor = "var(--border-color)"; }, 2500);
     } finally {
@@ -192,14 +202,14 @@ document.getElementById('imei').addEventListener('input', function(e) {
 });
 
 // ==========================================
-// 6. INGRESOS Y VENTAS (Sincronizado a Nube)
+// 5. INGRESOS Y VENTAS
 // ==========================================
 document.getElementById('form-ingreso').addEventListener('submit', function(e) {
     e.preventDefault();
     const imeiIngresado = document.getElementById('imei').value;
     
     if (inventario.find(eq => eq.imei === imeiIngresado)) {
-        alert("Este IMEI ya está registrado en el inventario.");
+        alert("Este IMEI ya está registrado.");
         return;
     }
 
@@ -209,23 +219,23 @@ document.getElementById('form-ingreso').addEventListener('submit', function(e) {
         modelo: document.getElementById('modelo').value,
         ram: document.getElementById('ram').value,
         rom: document.getElementById('rom').value,
-        precio_entrada: parseFloat(document.getElementById('precio_entrada').value)
+        precio_entrada: limpiarNumero(document.getElementById('precio_entrada').value) // Limpia puntos para hacer cálculos
     };
 
-    // 1. Guardar y mostrar en pantalla INMEDIATAMENTE
     inventario.push(nuevoEquipo);
+    registroHistorico.push(nuevoEquipo); // Lo añade al Master
+    
     guardarDatosLocales();
     renderizarVistas();
     this.reset();
     showTab('inventario'); 
 
-    // 2. Enviar a Google Sheets en segundo plano
     if(API_URL !== "AQUI_PEGA_TU_URL_DE_APPS_SCRIPT") {
         fetch(API_URL, {
             method: 'POST',
             body: JSON.stringify({ accion: 'agregar', equipo: nuevoEquipo }),
             headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-        }).catch(err => console.log("Error al subir a Sheets:", err));
+        }).catch(err => console.log(err));
     }
 });
 
@@ -250,19 +260,19 @@ document.getElementById('form-venta').addEventListener('submit', function(e) {
     e.preventDefault();
     if (!equipoEncontrado) return;
 
-    const precioVenta = parseFloat(document.getElementById('precio_venta').value);
+    // Lee el input limpio de puntos
+    const precioVenta = limpiarNumero(document.getElementById('precio_venta').value);
+    const plataformaSeleccionada = document.getElementById('plataforma_venta').value;
+    
     const ahora = new Date();
-    const fechaFormateada = ahora.toLocaleDateString('es-CO'); 
-    const horaFormateada = ahora.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
-
     const nuevaVenta = {
         ...equipoEncontrado,
-        fecha_hora_venta: `${fechaFormateada} - ${horaFormateada}`,
+        fecha_hora_venta: `${ahora.toLocaleDateString('es-CO')} - ${ahora.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}`,
         precio_venta: precioVenta,
+        plataforma: plataformaSeleccionada, // Guarda la plataforma
         ganancia: precioVenta - equipoEncontrado.precio_entrada
     };
 
-    // 1. Quitar de inventario y pasar a ventas INMEDIATAMENTE
     inventario = inventario.filter(item => item.imei !== equipoEncontrado.imei);
     ventas.push(nuevaVenta);
     
@@ -274,18 +284,17 @@ document.getElementById('form-venta').addEventListener('submit', function(e) {
     equipoEncontrado = null;
     showTab('ventas');
 
-    // 2. Avisar a Google Sheets para que actualice ambas pestañas
     if(API_URL !== "AQUI_PEGA_TU_URL_DE_APPS_SCRIPT") {
         fetch(API_URL, {
             method: 'POST',
             body: JSON.stringify({ accion: 'vender', venta: nuevaVenta }),
             headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-        }).catch(err => console.log("Error al subir venta a Sheets:", err));
+        }).catch(err => console.log(err));
     }
 });
 
 // ==========================================
-// 7. ESCÁNER AUTOMÁTICO
+// 6. ESCÁNER
 // ==========================================
 let escannerActivo = null;
 let inputDestino = '';
@@ -299,7 +308,7 @@ function abrirScanner(inputId) {
         { facingMode: "environment" }, 
         { fps: 10, qrbox: { width: 280, height: 100 } }, 
         onScanSuccess, 
-        onScanFailure
+        () => {}
     ).catch(err => {
         alert("Otorga permisos de cámara.");
         cerrarScanner();
@@ -322,7 +331,5 @@ function onScanSuccess(textoDecodificado) {
     inputElement.dispatchEvent(new Event('input', { bubbles: true })); 
     cerrarScanner();
 }
-
-function onScanFailure() {}
 
 document.getElementById('fecha').value = new Date().toISOString().split('T')[0];

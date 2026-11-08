@@ -4,55 +4,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inventario - TecnoAldy</title>
-    
-    <!-- Configuración PWA -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#ff6600">
     <link rel="apple-touch-icon" href="icon-192.png">
-
-    <!-- CAMBIO v10 PARA FORZAR ACTUALIZACIÓN -->
-    <link rel="stylesheet" href="style.css?v=10">
+    <link rel="stylesheet" href="style.css?v=12">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
-    <!-- Banner PWA -->
     <div id="install-banner" class="install-banner" style="display: none;">
         <div class="install-info">
             <img src="icon-192.png" alt="TecnoAldy App" class="install-icon">
-            <div>
-                <h4>Instalar TecnoAldy</h4>
-                <p>Agrega el inventario a tu pantalla de inicio</p>
-            </div>
+            <div><h4>Instalar TecnoAldy</h4><p>Agrega el inventario a tu pantalla de inicio</p></div>
         </div>
         <button id="btn-instalar" class="btn-primary" style="margin-top: 0; width: auto; padding: 8px 15px;">Instalar</button>
         <button id="btn-cerrar-banner" class="close-banner">&times;</button>
     </div>
 
-    <!-- Barra Móvil -->
     <div class="mobile-header">
         <div class="logo-mobile">TecnoAldy</div>
-        <button id="menu-toggle" class="hamburger-btn">
-            <i class="fas fa-bars"></i>
-        </button>
+        <button id="menu-toggle" class="hamburger-btn"><i class="fas fa-bars"></i></button>
     </div>
     <div id="mobile-overlay" class="overlay"></div>
 
-    <!-- Fondo Neón -->
-    <div class="bg-logo">
-        <img src="logo.png" alt="TecnoAldy Fondo">
-    </div>
+    <div class="bg-logo"><img src="logo.png" alt="TecnoAldy Fondo"></div>
 
-    <!-- Menú Lateral -->
     <div class="sidebar">
         <div class="logo-container">
-            <h2>TecnoAldy</h2>
-            <p>Control de Equipos</p>
+            <h2>TecnoAldy</h2><p>Control de Equipos</p>
         </div>
         <nav>
             <button class="nav-btn active" onclick="showTab('nuevo', this)"><i class="fas fa-plus"></i> Ingresar Equipo</button>
             <button class="nav-btn" onclick="showTab('inventario', this)"><i class="fas fa-box"></i> Inventario Actual</button>
             <button class="nav-btn" onclick="showTab('nueva-venta', this)"><i class="fas fa-shopping-cart"></i> Ingresar Venta</button>
-            <button class="nav-btn" onclick="showTab('ventas', this)"><i class="fas fa-history"></i> Historial Ventas</button>
+            <button class="nav-btn" onclick="showTab('ventas', this)"><i class="fas fa-coins"></i> Historial Ventas</button>
+            <button class="nav-btn" onclick="showTab('registro', this)"><i class="fas fa-history"></i> Registro Histórico</button>
         </nav>
     </div>
 
@@ -66,19 +51,14 @@
                         <label>Fecha de Ingreso</label>
                         <input type="date" id="fecha" required>
                     </div>
-                    
                     <div class="input-group">
                         <label>IMEI del Equipo</label>
                         <div class="imei-scanner-group">
                             <input type="number" id="imei" placeholder="Ej: 359123..." required>
-                            
-                            <!-- ARO RGB OCULTO POR DEFECTO -->
                             <div id="loading-imei" class="spinner-rgb" style="display: none;"></div>
-                            
                             <button type="button" class="btn-scan" id="btn-scan-imei" onclick="abrirScanner('imei')"><i class="fas fa-barcode"></i> Escanear</button>
                         </div>
                     </div>
-
                     <div class="input-group">
                         <label>Modelo del Equipo</label>
                         <input type="text" id="modelo" placeholder="Ej: Samsung Galaxy A54" required>
@@ -95,7 +75,8 @@
                     </div>
                     <div class="input-group">
                         <label>Precio de Entrada (COP)</label>
-                        <input type="number" id="precio_entrada" placeholder="Ej: 850000" required>
+                        <!-- AQUÍ SE APLICÓ EL FORMATO DE MONEDA -->
+                        <input type="text" id="precio_entrada" placeholder="Ej: 850.000" oninput="formatearMoneda(this)" required>
                     </div>
                     <button type="submit" class="btn-primary">Guardar en Inventario</button>
                 </form>
@@ -109,13 +90,7 @@
                 <div class="table-responsive">
                     <table id="tabla-inventario">
                         <thead>
-                            <tr>
-                                <th>Fecha Ingreso</th>
-                                <th>IMEI</th>
-                                <th>Modelo</th>
-                                <th>Specs</th>
-                                <th>Precio Costo</th>
-                            </tr>
+                            <tr><th>Fecha Ingreso</th><th>IMEI</th><th>Modelo</th><th>Specs</th><th>Precio Costo</th></tr>
                         </thead>
                         <tbody></tbody>
                     </table>
@@ -143,9 +118,21 @@
                         <p id="detalle-costo"></p>
                     </div>
 
+                    <!-- NUEVO: SELECCIÓN DE PLATAFORMA -->
                     <div class="input-group">
-                        <label>Precio de Venta (COP)</label>
-                        <input type="number" id="precio_venta" placeholder="Ej: 1100000" required>
+                        <label>Plataforma de Pago / Crédito</label>
+                        <select id="plataforma_venta" required>
+                            <option value="Contado" selected>💰 Contado</option>
+                            <option value="Aló Crédit">📱 Aló Crédit</option>
+                            <option value="Esmiopción">📱 Esmiopción</option>
+                            <option value="Celutecno">📱 Celutecno</option>
+                            <option value="PayJoy">📱 PayJoy</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Precio Final de Venta (COP)</label>
+                        <input type="text" id="precio_venta" placeholder="Ej: 1.100.000" oninput="formatearMoneda(this)" required>
                     </div>
                     <button type="submit" class="btn-primary" id="btn-confirmar-venta" disabled>Confirmar Venta</button>
                 </form>
@@ -159,14 +146,22 @@
                 <div class="table-responsive">
                     <table id="tabla-ventas">
                         <thead>
-                            <tr>
-                                <th>Fecha y Hora</th>
-                                <th>IMEI</th>
-                                <th>Modelo</th>
-                                <th>Costo</th>
-                                <th>Venta</th>
-                                <th>Ganancia</th>
-                            </tr>
+                            <tr><th>Fecha y Hora</th><th>IMEI</th><th>Modelo</th><th>Costo</th><th>Venta</th><th>Plataforma</th><th>Ganancia</th></tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- NUEVA PESTAÑA: Registro Histórico -->
+        <section id="registro" class="tab-content">
+            <div class="card">
+                <h3>Registro Histórico Master (Todos los ingresos)</h3>
+                <div class="table-responsive">
+                    <table id="tabla-registro">
+                        <thead>
+                            <tr><th>Fecha de Ingreso</th><th>IMEI</th><th>Modelo</th><th>Specs</th><th>Costo</th></tr>
                         </thead>
                         <tbody></tbody>
                     </table>
@@ -184,8 +179,7 @@
         </div>
     </div>
 
-    <!-- Librerías y Scripts con versión 10 -->
     <script src="https://unpkg.com/html5-qrcode"></script>
-    <script src="app.js?v=10"></script>
+    <script src="app.js?v=12"></script>
 </body>
 </html>

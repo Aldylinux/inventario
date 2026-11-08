@@ -76,12 +76,24 @@ body {
 .row .input-group { flex: 1; }
 label { margin-bottom: 8px; color: var(--text-muted); font-size: 14px; }
 
-input {
-    background-color: var(--bg-dark); border: 1px solid var(--border-color);
-    color: var(--text-light); padding: 12px; border-radius: 6px;
-    outline: none; transition: 0.3s; width: 100%;
+input, select {
+    background-color: var(--bg-dark); 
+    border: 1px solid var(--border-color);
+    color: var(--text-light); 
+    padding: 12px; 
+    border-radius: 6px;
+    outline: none; 
+    transition: 0.3s; 
+    width: 100%;
 }
-input:focus { border-color: var(--primary-orange); box-shadow: 0 0 5px rgba(255, 102, 0, 0.3); }
+select {
+    appearance: none; /* Quita la flecha fea por defecto del navegador */
+    cursor: pointer;
+}
+input:focus, select:focus { 
+    border-color: var(--primary-orange); 
+    box-shadow: 0 0 5px rgba(255, 102, 0, 0.3); 
+}
 
 /* Placeholders para cuando dice "Llenar Manual" */
 ::placeholder { color: #666666; font-size: 13px; }
