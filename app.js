@@ -272,7 +272,7 @@ document.getElementById('form-venta').addEventListener('submit', function(e) {
         plataforma: plataformaSeleccionada, // Guarda la plataforma
         ganancia: precioVenta - equipoEncontrado.precio_entrada
     };
-
+    
     inventario = inventario.filter(item => item.imei !== equipoEncontrado.imei);
     ventas.push(nuevaVenta);
     
