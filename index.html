@@ -38,6 +38,8 @@
             <button class="nav-btn" onclick="showTab('nueva-venta', this)"><i class="fas fa-shopping-cart"></i> Ingresar Venta</button>
             <button class="nav-btn" onclick="showTab('ventas', this)"><i class="fas fa-coins"></i> Historial Ventas</button>
             <button class="nav-btn" onclick="showTab('registro', this)"><i class="fas fa-history"></i> Registro Histórico</button>
+            <!-- NUEVO BOTÓN DE FACTURA -->
+            <button class="nav-btn" onclick="showTab('factura', this)"><i class="fas fa-file-invoice"></i> Crear Factura</button>
         </nav>
     </div>
 
@@ -178,7 +180,46 @@
                 </div>
             </div>
         </section>
+        <!-- NUEVA PESTAÑA: Crear Factura -->
+        <section id="factura" class="tab-content">
+            <div class="card form-card">
+                <h3>Generar Factura de Venta</h3>
+                <form id="form-factura">
+                    <div class="input-group">
+                        <label>Buscar Equipo Vendido (Por Modelo o Escanear IMEI)</label>
+                        <div class="imei-scanner-group">
+                            <input type="text" id="buscar_imei_factura" list="lista-imeis-ventas" placeholder="Escanea el IMEI del equipo vendido..." required autocomplete="off">
+                            <button type="button" class="btn-scan" onclick="abrirScanner('buscar_imei_factura')"><i class="fas fa-barcode"></i> Escanear</button>
+                        </div>
+                        <datalist id="lista-imeis-ventas"></datalist>
+                    </div>
+
+                    <div id="info-equipo-factura" class="info-box" style="display: none;">
+                        <p class="resaltado"><strong>Equipo Vendido Encontrado:</strong></p>
+                        <p id="detalle-modelo-factura"></p>
+                        <p id="detalle-venta-factura"></p>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Nombre del Cliente</label>
+                        <input type="text" id="cliente_nombre" placeholder="Ej: Juan Pérez" required>
+                    </div>
+                    <div class="row">
+                        <div class="input-group">
+                            <label>Cédula del Cliente</label>
+                            <input type="number" id="cliente_cedula" placeholder="Ej: 1002..." required>
+                        </div>
+                        <div class="input-group">
+                            <label>Teléfono del Cliente</label>
+                            <input type="number" id="cliente_telefono" placeholder="Ej: 320..." required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary" id="btn-generar-factura" disabled><i class="fas fa-file-pdf"></i> Generar Factura en PDF</button>
+                </form>
+            </div>
+        </section>
     </main>
+    
 
     <!-- Modal para el Escáner Centrado -->
     <div id="scanner-modal" class="modal">

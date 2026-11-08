@@ -96,6 +96,14 @@ function guardarDatosLocales() {
     localStorage.setItem('tecnoaldy_inventario', JSON.stringify(inventario));
     localStorage.setItem('tecnoaldy_ventas', JSON.stringify(ventas));
     localStorage.setItem('tecnoaldy_registro', JSON.stringify(registroHistorico));
+// Llenar el buscador de la pestaña FACTURAS
+    const listaImeisVentas = document.getElementById('lista-imeis-ventas');
+    if (listaImeisVentas) {
+        listaImeisVentas.innerHTML = '';
+        ventas.forEach(venta => {
+            listaImeisVentas.innerHTML += `<option value="${venta.imei}">${venta.modelo}</option>`;
+        });
+    }
 }
 
 function renderizarVistas() {
@@ -272,7 +280,7 @@ document.getElementById('form-venta').addEventListener('submit', function(e) {
         plataforma: plataformaSeleccionada, // Guarda la plataforma
         ganancia: precioVenta - equipoEncontrado.precio_entrada
     };
-    
+
     inventario = inventario.filter(item => item.imei !== equipoEncontrado.imei);
     ventas.push(nuevaVenta);
     
@@ -420,3 +428,142 @@ window.descargarPDF = function(tipo) {
     const nombreArchivo = titulo.replace(/ /g, "_").toLowerCase();
     doc.save(`${nombreArchivo}.pdf`);
 };
+// ==========================================
+// 9. MÓDULO DE FACTURACIÓN (PDF A CLIENTES)
+// ==========================================
+let equipoVendidoEncontrado = null;
+
+// Buscador de IMEI en la pestaña de facturas
+const inputBuscarFactura = document.getElementById('buscar_imei_factura');
+if (inputBuscarFactura) {
+    inputBuscarFactura.addEventListener('input', function(e) {
+        const valorInput = e.target.value;
+        // Busca en el array de VENTAS (los que ya salieron)
+        equipoVendidoEncontrado = ventas.find(eq => eq.imei.toString() === valorInput);
+        const infoBox = document.getElementById('info-equipo-factura');
+        const btnGenerar = document.getElementById('btn-generar-factura');
+
+        if (equipoVendidoEncontrado) {
+            document.getElementById('detalle-modelo-factura').innerText = `${equipoVendidoEncontrado.modelo}`;
+            document.getElementById('detalle-venta-factura').innerText = `Vendido por: ${formatCOP(equipoVendidoEncontrado.precio_venta)} (${equipoVendidoEncontrado.plataforma || 'Contado'})`;
+            infoBox.style.display = 'block';
+            btnGenerar.disabled = false;
+        } else {
+            infoBox.style.display = 'none';
+            btnGenerar.disabled = true;
+        }
+    });
+}
+
+// Botón de Generar Factura
+const formFactura = document.getElementById('form-factura');
+if (formFactura) {
+    formFactura.addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (!equipoVendidoEncontrado) return;
+
+        const nombre = document.getElementById('cliente_nombre').value.toUpperCase();
+        const cedula = document.getElementById('cliente_cedula').value;
+        const telefono = document.getElementById('cliente_telefono').value;
+
+        generarFacturaClientePDF(equipoVendidoEncontrado, nombre, cedula, telefono);
+        
+        this.reset();
+        document.getElementById('info-equipo-factura').style.display = 'none';
+        document.getElementById('btn-generar-factura').disabled = true;
+        equipoVendidoEncontrado = null;
+    });
+}
+
+function generarFacturaClientePDF(equipo, cliente, cedula, telefono) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('p', 'mm', 'a4'); // Formato Carta/A4 Vertical
+
+    // Generar un número de factura basado en la fecha (Ej: FAC-172554)
+    const numeroFactura = "FAC-" + Math.floor(Date.now() / 10000).toString(); 
+
+    // --- ENCABEZADO DEL LOCAL ---
+    doc.setFontSize(22);
+    doc.setTextColor(255, 102, 0); // Naranja TecnoAldy
+    doc.text("TECNOALDY", 105, 18, { align: 'center' });
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text("NIT: 24728906-0", 105, 24, { align: 'center' });
+    doc.text("Cra 7 # 7-37 Camellón, Fresno - Tolima", 105, 29, { align: 'center' });
+    doc.text("Tel: 302 736 4763", 105, 34, { align: 'center' });
+
+    // --- DATOS DE LA FACTURA ---
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`FACTURA DE VENTA: ${numeroFactura}`, 14, 45);
+    doc.text(`FECHA DE COMPRA: ${equipo.fecha_hora_venta}`, 14, 52);
+
+    // --- DATOS DEL CLIENTE ---
+    doc.setDrawColor(255, 102, 0);
+    doc.setLineWidth(0.5);
+    doc.line(14, 57, 196, 57); // Línea naranja divisoria
+    
+    doc.setFontSize(11);
+    doc.text("DATOS DEL CLIENTE:", 14, 65);
+    doc.setFontSize(10);
+    doc.setTextColor(50, 50, 50);
+    doc.text(`Nombre: ${cliente}`, 14, 72);
+    doc.text(`C.C / NIT: ${cedula}`, 14, 78);
+    doc.text(`Teléfono: ${telefono}`, 14, 84);
+
+    // --- DETALLE DEL EQUIPO (TABLA) ---
+    doc.autoTable({
+        startY: 92,
+        head: [["Cant.", "Descripción del Equipo", "IMEI", "Plataforma", "Valor Total"]],
+        body: [
+            ["1", equipo.modelo, equipo.imei, equipo.plataforma || 'Contado', formatCOP(equipo.precio_venta)]
+        ],
+        theme: 'grid',
+        headStyles: { fillColor: [255, 102, 0] },
+        styles: { fontSize: 10, cellPadding: 5 }
+    });
+
+    // --- TÉRMINOS DE GARANTÍA ---
+    const finalY = doc.lastAutoTable.finalY + 15;
+    doc.setFontSize(11);
+    doc.setTextColor(220, 53, 69); // Rojo para la advertencia
+    doc.text("TÉRMINOS Y CONDICIONES DE GARANTÍA", 14, finalY);
+    
+    doc.setFontSize(9);
+    doc.setTextColor(80, 80, 80);
+    const terminos = [
+        "1. Garantía válida por un (1) año a partir de la fecha de compra por defectos de fábrica.",
+        "2. EXCLUSIONES: La garantía NO cubre daños causados por golpes, humedad, rupturas,",
+        "   display dañado, sobrecargas eléctricas o mala manipulación del usuario.",
+        "3. REQUISITO INDISPENSABLE: Presentar la caja original del equipo en buen estado y esta factura.",
+        "4. REGISTRO DE IMEI: El equipo debe ser registrado ante el operador móvil del cliente en un",
+        "   plazo máximo de 20 días hábiles. No hay garantía por bloqueo de NO REGISTRO."
+    ];
+    let yPos = finalY + 7;
+    terminos.forEach(linea => {
+        doc.text(linea, 14, yPos);
+        yPos += 5;
+    });
+
+    // --- FIRMAS AUTO-LLENADAS ---
+    doc.setDrawColor(0, 0, 0);
+    doc.setLineWidth(0.3);
+    
+    // Firma TecnoAldy (Izquierda)
+    doc.line(20, yPos + 30, 80, yPos + 30);
+    doc.setFontSize(10);
+    doc.text("Firma Vendedor Autorizado", 50, yPos + 35, { align: 'center' });
+    doc.text("TECNOALDY", 50, yPos + 40, { align: 'center' });
+
+    // Firma Cliente (Derecha - AUTO-LLENADA)
+    doc.line(130, yPos + 30, 190, yPos + 30);
+    doc.text("Firma Cliente / Comprador", 160, yPos + 35, { align: 'center' });
+    doc.setFontType("bold");
+    doc.text(cliente, 160, yPos + 40, { align: 'center' }); // Pone el nombre automático
+    doc.setFontType("normal");
+    doc.text(`C.C: ${cedula}`, 160, yPos + 45, { align: 'center' }); // Pone la cédula automática
+
+    // Descargar
+    doc.save(`Factura_${cliente.replace(/ /g, "_")}_${equipo.modelo}.pdf`);
+}
