@@ -248,15 +248,15 @@ function abrirScanner(inputId) {
     inputDestino = inputId;
     document.getElementById('scanner-modal').style.display = 'block';
     
-    // Configuramos el lector sin la interfaz fea (solo la cámara)
+    // Configuramos el lector
     escannerActivo = new Html5Qrcode("reader");
     
     const configEscaneo = { 
         fps: 10, 
-        qrbox: { width: 280, height: 100 } // Rectángulo ancho para IMEI
+        qrbox: { width: 280, height: 100 } 
     };
 
-    // Forzar el uso de la cámara trasera ("environment") de manera automática
+    // Forzar el uso de la cámara trasera
     escannerActivo.start(
         { facingMode: "environment" }, 
         configEscaneo, 
@@ -281,15 +281,20 @@ function cerrarScanner() {
 }
 
 function onScanSuccess(textoDecodificado, resultado) {
-    // Pone el texto en el input correspondiente
-    document.getElementById(inputDestino).value = textoDecodificado;
-    document.getElementById(inputDestino).dispatchEvent(new Event('input')); 
+    const inputElement = document.getElementById(inputDestino);
     
+    // 1. Pone el texto en el input
+    inputElement.value = textoDecodificado;
+    
+    // 2. Dispara el evento para que la pestaña de ventas busque el equipo
+    inputElement.dispatchEvent(new Event('input', { bubbles: true })); 
+    
+    // 3. NUEVO: Llama directamente a la función de autocompletado si estamos en "Ingresar Equipo"
     if(inputDestino === 'imei') {
         autocompletarDatosIMEI(textoDecodificado);
     }
     
-    // Cierra la cámara automáticamente al leer el código
+    // 4. Cierra la cámara
     cerrarScanner();
 }
 
