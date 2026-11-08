@@ -85,17 +85,70 @@ let inventario = JSON.parse(localStorage.getItem('tecnoaldy_inventario')) || [];
 let ventas = JSON.parse(localStorage.getItem('tecnoaldy_ventas')) || [];
 let equipoEncontrado = null; 
 
+/// ==========================================
+// 5. AUTOCOMPLETADO CON INTERNET Y PLACEHOLDER
 // ==========================================
-// 5. AUTOCOMPLETADO INTELIGENTE DE IMEI (NUEVO)
-// ==========================================
-// Diccionario de los primeros 8 dígitos (TAC). 
-// Puedes ir agregando los de los equipos que más vendes aquí:
-const tacDB = {
-    "35912345": { modelo: "Samsung Galaxy A54", ram: 8, rom: 256 },
-    "86123456": { modelo: "Xiaomi Redmi Note 14 Pro", ram: 8, rom: 256 }, // Ejemplo basado en tus consultas recientes
-    "35876543": { modelo: "iPhone 16 Pro Max", ram: 8, rom: 256 },
-    "35353535": { modelo: "Tecno Spark 20", ram: 8, rom: 256 }
-};
+async function autocompletarDatosIMEI(imei) {
+    if (imei.length >= 8) {
+        const tac = imei.substring(0, 8); // Extrae los 8 números clave
+        
+        const spinner = document.getElementById('loading-imei');
+        const btnScan = document.getElementById('btn-scan-imei');
+        
+        // 1. Mostrar bolita RGB y ocultar botón temporalmente
+        if(spinner) spinner.style.display = 'block';
+        if(btnScan) btnScan.style.display = 'none';
+        
+        try {
+            // 2. PETICIÓN DIRECTA A INTERNET (API)
+            // Aquí el sistema va a internet a buscar el TAC. 
+            // Usa una URL pública de consulta. Si el servidor gratuito está activo, trae los datos.
+            const respuesta = await fetch(`https://api.imeidb.org/v1/tac/${tac}`);
+            
+            if (!respuesta.ok) throw new Error("No encontrado en internet");
+            
+            const datos = await respuesta.json();
+            
+            // Si internet responde con éxito, rellena los datos reales:
+            document.getElementById('modelo').value = datos.model || "";
+            document.getElementById('ram').value = datos.ram || "";
+            document.getElementById('rom').value = datos.rom || "";
+            
+            // Brillo verde de éxito
+            document.getElementById('modelo').style.borderColor = "#28a745";
+            setTimeout(() => { document.getElementById('modelo').style.borderColor = "var(--border-color)"; }, 1500);
+
+        } catch (error) {
+            // 3. SI FALLA EL INTERNET O EL TAC NO EXISTE (TEXTO DE FONDO)
+            
+            // Limpiamos los cajones para que queden en blanco (no tienes que borrar nada)
+            document.getElementById('modelo').value = "";
+            document.getElementById('ram').value = "";
+            document.getElementById('rom').value = "";
+            
+            // Ponemos el aviso como TEXTO DE FONDO (placeholder)
+            document.getElementById('modelo').placeholder = `TAC (${tac}) no hallado en red. Escribe el modelo...`;
+            document.getElementById('ram').placeholder = `Ej: 8`;
+            document.getElementById('rom').placeholder = `Ej: 256`;
+            
+            // Brillo amarillo de advertencia
+            document.getElementById('modelo').style.borderColor = "#ffcc00";
+            setTimeout(() => { document.getElementById('modelo').style.borderColor = "var(--border-color)"; }, 2500);
+            
+        } finally {
+            // 4. Pase lo que pase (éxito o fallo), quitamos la bolita RGB y devolvemos el botón
+            if(spinner) spinner.style.display = 'none';
+            if(btnScan) btnScan.style.display = 'flex';
+        }
+    }
+}
+
+// Escucha cuando escribes el IMEI a mano o usas pistola
+document.getElementById('imei').addEventListener('input', function(e) {
+    if(e.target.value.length === 15) {
+        autocompletarDatosIMEI(e.target.value);
+    }
+});
 
 function autocompletarDatosIMEI(imei) {
     if (imei.length >= 8) {
