@@ -433,12 +433,10 @@ window.descargarPDF = function(tipo) {
 // ==========================================
 let equipoVendidoEncontrado = null;
 
-// Buscador de IMEI en la pestaña de facturas
 const inputBuscarFactura = document.getElementById('buscar_imei_factura');
 if (inputBuscarFactura) {
     inputBuscarFactura.addEventListener('input', function(e) {
         const valorInput = e.target.value;
-        // Busca en el array de VENTAS (los que ya salieron)
         equipoVendidoEncontrado = ventas.find(eq => eq.imei.toString() === valorInput);
         const infoBox = document.getElementById('info-equipo-factura');
         const btnGenerar = document.getElementById('btn-generar-factura');
@@ -455,7 +453,6 @@ if (inputBuscarFactura) {
     });
 }
 
-// Botón de Generar Factura
 const formFactura = document.getElementById('form-factura');
 if (formFactura) {
     formFactura.addEventListener('submit', function(e) {
@@ -465,105 +462,142 @@ if (formFactura) {
         const nombre = document.getElementById('cliente_nombre').value.toUpperCase();
         const cedula = document.getElementById('cliente_cedula').value;
         const telefono = document.getElementById('cliente_telefono').value;
-
-        generarFacturaClientePDF(equipoVendidoEncontrado, nombre, cedula, telefono);
         
-        this.reset();
-        document.getElementById('info-equipo-factura').style.display = 'none';
-        document.getElementById('btn-generar-factura').disabled = true;
-        equipoVendidoEncontrado = null;
+        const btnGenerar = document.getElementById('btn-generar-factura');
+        const textoOriginalBtn = btnGenerar.innerHTML;
+        btnGenerar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando...';
+        btnGenerar.disabled = true;
+
+        // Pequeño timeout para que el DOM se actualice antes de procesar el PDF pesado
+        setTimeout(() => {
+            generarFacturaClientePDF(equipoVendidoEncontrado, nombre, cedula, telefono);
+            
+            this.reset();
+            document.getElementById('info-equipo-factura').style.display = 'none';
+            btnGenerar.innerHTML = textoOriginalBtn;
+            equipoVendidoEncontrado = null;
+        }, 300);
     });
 }
 
 function generarFacturaClientePDF(equipo, cliente, cedula, telefono) {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF('p', 'mm', 'a4'); // Formato Carta/A4 Vertical
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'mm', 'a4'); 
 
-    // Generar un número de factura basado en la fecha (Ej: FAC-172554)
-    const numeroFactura = "FAC-" + Math.floor(Date.now() / 10000).toString(); 
+        const numeroFactura = "FAC-" + Math.floor(Date.now() / 10000).toString(); 
 
-    // --- ENCABEZADO DEL LOCAL ---
-    doc.setFontSize(22);
-    doc.setTextColor(255, 102, 0); // Naranja TecnoAldy
-    doc.text("TECNOALDY", 105, 18, { align: 'center' });
-    
-    doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100);
-    doc.text("NIT: 24728906-0", 105, 24, { align: 'center' });
-    doc.text("Cra 7 # 7-37 Camellón, Fresno - Tolima", 105, 29, { align: 'center' });
-    doc.text("Tel: 302 736 4763", 105, 34, { align: 'center' });
+        // --- ENCABEZADO TECNOALDY ---
+        doc.setFontSize(22);
+        doc.setTextColor(255, 102, 0); 
+        doc.text("TECNOALDY", 105, 18, { align: 'center' });
+        
+        doc.setFontSize(10);
+        doc.setTextColor(100, 100, 100);
+        doc.text("NIT: 24728906-0", 105, 24, { align: 'center' });
+        doc.text("Cra 7 # 7-37 Camellón, Fresno - Tolima", 105, 29, { align: 'center' });
+        doc.text("Tel: 302 736 4763", 105, 34, { align: 'center' });
 
-    // --- DATOS DE LA FACTURA ---
-    doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0);
-    doc.text(`FACTURA DE VENTA: ${numeroFactura}`, 14, 45);
-    doc.text(`FECHA DE COMPRA: ${equipo.fecha_hora_venta}`, 14, 52);
+        // --- DATOS FACTURA ---
+        doc.setFontSize(12);
+        doc.setTextColor(0, 0, 0);
+        doc.text(`FACTURA DE VENTA: ${numeroFactura}`, 14, 45);
+        doc.text(`FECHA DE COMPRA: ${equipo.fecha_hora_venta}`, 14, 52);
 
-    // --- DATOS DEL CLIENTE ---
-    doc.setDrawColor(255, 102, 0);
-    doc.setLineWidth(0.5);
-    doc.line(14, 57, 196, 57); // Línea naranja divisoria
-    
-    doc.setFontSize(11);
-    doc.text("DATOS DEL CLIENTE:", 14, 65);
-    doc.setFontSize(10);
-    doc.setTextColor(50, 50, 50);
-    doc.text(`Nombre: ${cliente}`, 14, 72);
-    doc.text(`C.C / NIT: ${cedula}`, 14, 78);
-    doc.text(`Teléfono: ${telefono}`, 14, 84);
+        // --- DATOS CLIENTE ---
+        doc.setDrawColor(255, 102, 0);
+        doc.setLineWidth(0.5);
+        doc.line(14, 57, 196, 57); 
+        
+        doc.setFontSize(11);
+        doc.text("DATOS DEL CLIENTE:", 14, 65);
+        doc.setFontSize(10);
+        doc.setTextColor(50, 50, 50);
+        doc.text(`Nombre: ${cliente}`, 14, 72);
+        doc.text(`C.C / NIT: ${cedula}`, 14, 78);
+        doc.text(`Teléfono: ${telefono}`, 14, 84);
 
-    // --- DETALLE DEL EQUIPO (TABLA) ---
-    doc.autoTable({
-        startY: 92,
-        head: [["Cant.", "Descripción del Equipo", "IMEI", "Plataforma", "Valor Total"]],
-        body: [
-            ["1", equipo.modelo, equipo.imei, equipo.plataforma || 'Contado', formatCOP(equipo.precio_venta)]
-        ],
-        theme: 'grid',
-        headStyles: { fillColor: [255, 102, 0] },
-        styles: { fontSize: 10, cellPadding: 5 }
-    });
+        // --- TABLA EQUIPO ---
+        doc.autoTable({
+            startY: 92,
+            head: [["Cant.", "Descripción del Equipo", "IMEI", "Plataforma", "Valor Total"]],
+            body: [
+                ["1", equipo.modelo, equipo.imei, equipo.plataforma || 'Contado', formatCOP(equipo.precio_venta)]
+            ],
+            theme: 'grid',
+            headStyles: { fillColor: [255, 102, 0] },
+            styles: { fontSize: 10, cellPadding: 5 }
+        });
 
-    // --- TÉRMINOS DE GARANTÍA ---
-    const finalY = doc.lastAutoTable.finalY + 15;
-    doc.setFontSize(11);
-    doc.setTextColor(220, 53, 69); // Rojo para la advertencia
-    doc.text("TÉRMINOS Y CONDICIONES DE GARANTÍA", 14, finalY);
-    
-    doc.setFontSize(9);
-    doc.setTextColor(80, 80, 80);
-    const terminos = [
-        "1. Garantía válida por un (1) año a partir de la fecha de compra por defectos de fábrica.",
-        "2. EXCLUSIONES: La garantía NO cubre daños causados por golpes, humedad, rupturas,",
-        "   display dañado, sobrecargas eléctricas o mala manipulación del usuario.",
-        "3. REQUISITO INDISPENSABLE: Presentar la caja original del equipo en buen estado y esta factura.",
-        "4. REGISTRO DE IMEI: El equipo debe ser registrado ante el operador móvil del cliente en un",
-        "   plazo máximo de 20 días hábiles. No hay garantía por bloqueo de NO REGISTRO."
-    ];
-    let yPos = finalY + 7;
-    terminos.forEach(linea => {
-        doc.text(linea, 14, yPos);
-        yPos += 5;
-    });
+        // --- TÉRMINOS GARANTÍA ---
+        const finalY = doc.lastAutoTable.finalY + 15;
+        doc.setFontSize(11);
+        doc.setTextColor(220, 53, 69); 
+        doc.text("TÉRMINOS Y CONDICIONES DE GARANTÍA", 14, finalY);
+        
+        doc.setFontSize(9);
+        doc.setTextColor(80, 80, 80);
+        const terminos = [
+            "1. Garantía válida por un (1) año a partir de la fecha de compra por defectos de fábrica.",
+            "2. EXCLUSIONES: La garantía NO cubre daños causados por golpes, humedad, rupturas,",
+            "   display dañado, sobrecargas eléctricas o mala manipulación del usuario.",
+            "3. REQUISITO INDISPENSABLE: Presentar la caja original del equipo en buen estado y esta factura.",
+            "4. REGISTRO DE IMEI: El equipo debe ser registrado ante el operador móvil del cliente en un",
+            "   plazo máximo de 20 días hábiles. No hay garantía por bloqueo de NO REGISTRO."
+        ];
+        let yPos = finalY + 7;
+        terminos.forEach(linea => {
+            doc.text(linea, 14, yPos);
+            yPos += 5;
+        });
 
-    // --- FIRMAS AUTO-LLENADAS ---
-    doc.setDrawColor(0, 0, 0);
-    doc.setLineWidth(0.3);
-    
-    // Firma TecnoAldy (Izquierda)
-    doc.line(20, yPos + 30, 80, yPos + 30);
-    doc.setFontSize(10);
-    doc.text("Firma Vendedor Autorizado", 50, yPos + 35, { align: 'center' });
-    doc.text("TECNOALDY", 50, yPos + 40, { align: 'center' });
+        // --- FIRMAS ---
+        doc.setDrawColor(0, 0, 0);
+        doc.setLineWidth(0.3);
+        
+        doc.line(20, yPos + 30, 80, yPos + 30);
+        doc.setFontSize(10);
+        doc.text("Firma Vendedor Autorizado", 50, yPos + 35, { align: 'center' });
+        doc.text("TECNOALDY", 50, yPos + 40, { align: 'center' });
 
-    // Firma Cliente (Derecha - AUTO-LLENADA)
-    doc.line(130, yPos + 30, 190, yPos + 30);
-    doc.text("Firma Cliente / Comprador", 160, yPos + 35, { align: 'center' });
-    doc.setFontType("bold");
-    doc.text(cliente, 160, yPos + 40, { align: 'center' }); // Pone el nombre automático
-    doc.setFontType("normal");
-    doc.text(`C.C: ${cedula}`, 160, yPos + 45, { align: 'center' }); // Pone la cédula automática
+        doc.line(130, yPos + 30, 190, yPos + 30);
+        doc.text("Firma Cliente / Comprador", 160, yPos + 35, { align: 'center' });
+        doc.setFontType("bold");
+        doc.text(cliente, 160, yPos + 40, { align: 'center' }); 
+        doc.setFontType("normal");
+        doc.text(`C.C: ${cedula}`, 160, yPos + 45, { align: 'center' }); 
 
-    // Descargar
-    doc.save(`Factura_${cliente.replace(/ /g, "_")}_${equipo.modelo}.pdf`);
+        // ===============================================
+        // MODO COMPARTIR (WHATSAPP/TELEGRAM) NATIVO PARA MÓVILES
+        // ===============================================
+        const nombreArchivo = `Factura_${cliente.replace(/ /g, "_")}_${equipo.modelo}.pdf`;
+        
+        // 1. Extraemos el PDF en bruto (Blob)
+        const pdfBlob = doc.output('blob');
+        
+        // 2. Verificamos si el navegador/celular soporta la función "Compartir" con archivos
+        if (navigator.canShare && navigator.canShare({ files: [new File([pdfBlob], nombreArchivo, { type: 'application/pdf' })] })) {
+            const archivoCompartir = new File([pdfBlob], nombreArchivo, { type: 'application/pdf' });
+            
+            navigator.share({
+                title: 'Factura TecnoAldy',
+                text: `Hola ${cliente}, adjunto tu factura de compra del ${equipo.modelo}. ¡Gracias por confiar en TecnoAldy!`,
+                files: [archivoCompartir]
+            })
+            .then(() => console.log('Factura compartida con éxito'))
+            .catch((error) => console.log('Error al compartir', error));
+            
+        } else {
+            // 3. Si es PC o no soporta compartir, hace la descarga tradicional
+            doc.save(nombreArchivo);
+            
+            // Y abrimos el visor del navegador por si acaso
+            const pdfUrl = URL.createObjectURL(pdfBlob);
+            window.open(pdfUrl, '_blank');
+        }
+        
+    } catch (error) {
+        console.error("Error crítico generando el PDF:", error);
+        alert("Ocurrió un error creando el PDF. Intenta de nuevo.");
+    }
 }
