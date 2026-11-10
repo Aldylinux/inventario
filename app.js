@@ -145,11 +145,36 @@ function renderizarVistas() {
 }
 
 // ==========================================
-// 4. AUTOCOMPLETADO IMEI
+// 4. AUTOCOMPLETADO IMEI Y PREVENCIÓN DE DUPLICADOS
 // ==========================================
 const tacDB = { "35912345": { modelo: "Samsung Galaxy A54", ram: 8, rom: 256 } };
 
 async function autocompletarDatosIMEI(imei) {
+    // 1. FRENO DE EMERGENCIA: Verifica los 15 dígitos completos contra el inventario
+    const equipoExistente = inventario.find(eq => eq.imei.toString() === imei.toString());
+    
+    if (equipoExistente) {
+        document.getElementById('modelo').value = "";
+        document.getElementById('ram').value = "";
+        document.getElementById('rom').value = "";
+        
+        document.getElementById('modelo').placeholder = "❌ IMEI YA REGISTRADO";
+        document.getElementById('modelo').style.borderColor = "#dc3545"; 
+        document.getElementById('imei').style.borderColor = "#dc3545"; 
+        
+        alert(`¡ALERTA! Este equipo (IMEI: ${equipoExistente.imei}) ya está en el inventario.\n\nModelo: ${equipoExistente.modelo}\nIngresado el: ${limpiarFecha(equipoExistente.fecha)}`);
+        
+        setTimeout(() => { 
+            document.getElementById('modelo').style.borderColor = "var(--border-color)"; 
+            document.getElementById('imei').style.borderColor = "var(--border-color)"; 
+            document.getElementById('imei').value = ""; 
+            document.getElementById('modelo').placeholder = "Ej: Samsung Galaxy A54";
+        }, 3500);
+        
+        return; 
+    }
+
+    // 2. BUSCAR EL MODELO USANDO EL TAC (Los primeros 8 dígitos)
     const tac = imei.substring(0, 8);
     const spinner = document.getElementById('loading-imei');
     const btnScan = document.getElementById('btn-scan-imei');
@@ -193,14 +218,15 @@ async function autocompletarDatosIMEI(imei) {
     }
 }
 
+// 3. EL DISPARADOR: Solo arranca si el IMEI tiene 15 dígitos exactos
 document.getElementById('imei').addEventListener('input', function(e) {
     const val = e.target.value;
-    if(val.length >= 14 && val.length <= 16) {
+    // Solo cuando llega a los 15 dígitos que exige la industria celular
+    if(val.length === 15) {
         if(document.getElementById('loading-imei').style.display === 'block') return;
         autocompletarDatosIMEI(val);
     }
 });
-
 // ==========================================
 // 5. INGRESOS Y VENTAS
 // ==========================================
@@ -227,9 +253,25 @@ document.getElementById('form-ingreso').addEventListener('submit', function(e) {
     
     guardarDatosLocales();
     renderizarVistas();
-    this.reset();
-    showTab('inventario'); 
+    
+    // --- SOLUCIÓN BUG 1 y 2 ---
+    this.reset(); // Limpia los campos
+    document.getElementById('fecha').value = new Date().toISOString().split('T')[0]; // Vuelve a poner la fecha de hoy
+    
+    // Animación visual de éxito sin cambiar de pestaña
+    const btnGuardar = this.querySelector('button[type="submit"]');
+    const textoOriginal = btnGuardar.innerHTML;
+    const fondoOriginal = btnGuardar.style.backgroundColor;
+    
+    btnGuardar.innerHTML = '<i class="fas fa-check-circle"></i> ¡Equipo Agregado!';
+    btnGuardar.style.backgroundColor = '#28a745'; // Se pone verde de éxito
+    
+    setTimeout(() => {
+        btnGuardar.innerHTML = textoOriginal;
+        btnGuardar.style.backgroundColor = fondoOriginal;
+    }, 2000); // Vuelve a la normalidad después de 2 segundos
 
+    // Subida a Google Sheets en segundo plano
     if(API_URL && !API_URL.includes("AQUI_PEGA")) {
         fetch(API_URL, {
             method: 'POST',
@@ -264,7 +306,6 @@ document.getElementById('form-venta').addEventListener('submit', function(e) {
     const plataformaSeleccionada = document.getElementById('plataforma_venta').value;
     
     const ahora = new Date();
-    // Corrección crítica: Todo en una sola línea sin guiones raros
     const nuevaVenta = {
         ...equipoEncontrado,
         fecha_hora_venta: `${ahora.toLocaleDateString('es-CO')} - ${ahora.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}`,
