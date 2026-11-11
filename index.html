@@ -7,7 +7,7 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#ff6600">
     <link rel="apple-touch-icon" href="icon-192.png">
-    <link rel="stylesheet" href="style.css?v=13">
+    <link rel="stylesheet" href="style.css?v=30">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
@@ -86,7 +86,6 @@
         <!-- Pestaña: Inventario -->
         <section id="inventario" class="tab-content">
             <div class="card">
-                <!-- AQUI SE AÑADIÓ EL BOTÓN DE PDF -->
                 <div class="card-header">
                     <h3>Equipos Disponibles</h3>
                     <button class="btn-pdf" onclick="descargarPDF('inventario')"><i class="fas fa-file-pdf"></i> PDF</button>
@@ -94,7 +93,7 @@
                 <div class="table-responsive">
                     <table id="tabla-inventario">
                         <thead>
-                            <tr><th>Fecha Ingreso</th><th>IMEI</th><th>Modelo</th><th>Specs</th><th>Precio Costo</th></tr>
+                            <tr><th>N°</th><th>Fecha Ingreso</th><th>IMEI</th><th>Modelo</th><th>Specs</th><th>Precio Costo</th></tr>
                         </thead>
                         <tbody></tbody>
                     </table>
@@ -145,7 +144,6 @@
         <!-- Pestaña: Historial de Ventas -->
         <section id="ventas" class="tab-content">
             <div class="card">
-                <!-- AQUI SE AÑADIÓ EL BOTÓN DE PDF -->
                 <div class="card-header">
                     <h3>Historial de Equipos Vendidos</h3>
                     <button class="btn-pdf" onclick="descargarPDF('ventas')"><i class="fas fa-file-pdf"></i> PDF</button>
@@ -164,7 +162,6 @@
         <!-- Pestaña: Registro Histórico -->
         <section id="registro" class="tab-content">
             <div class="card">
-                <!-- AQUI SE AÑADIÓ EL BOTÓN DE PDF -->
                 <div class="card-header">
                     <h3>Registro Histórico Master</h3>
                     <button class="btn-pdf" onclick="descargarPDF('registro')"><i class="fas fa-file-pdf"></i> PDF</button>
@@ -179,7 +176,7 @@
                 </div>
             </div>
         </section>
-        <!-- NUEVA PESTAÑA: Crear Factura -->
+        
         <!-- Pestaña: Crear Factura -->
         <section id="factura" class="tab-content">
             <div class="card form-card">
@@ -215,7 +212,6 @@
                         </div>
                     </div>
 
-                    <!-- NUEVOS CAMPOS: FINANCIACIÓN (OPCIONALES) -->
                     <div class="row">
                         <div class="input-group">
                             <label>N° Cuotas</label>
@@ -235,7 +231,6 @@
                         </div>
                     </div>
 
-                    <!-- NUEVO: SELECTOR DE VENDEDOR Y FIRMA DEL CLIENTE -->
                     <div class="row">
                         <div class="input-group">
                             <label>Vendedor Autorizado</label>
@@ -259,7 +254,6 @@
         </section>
     </main>
     
-
     <!-- Modal para el Escáner Centrado -->
     <div id="scanner-modal" class="modal">
         <div class="modal-content">
@@ -268,11 +262,21 @@
             <div id="reader"></div>
         </div>
     </div>
+    
+    <!-- MODAL DE ALERTA PERSONALIZADA -->
+    <div id="custom-alert" class="modal">
+        <div class="modal-content alert-content">
+            <div class="alert-icon" id="alert-icon"><i class="fas fa-exclamation-circle"></i></div>
+            <h3 id="alert-title" style="color: var(--primary-orange); margin-bottom: 10px;">Alerta</h3>
+            <p id="alert-message">Mensaje...</p>
+            <button class="btn-primary" onclick="cerrarAlerta()" style="width: 100%; margin-top: 15px;">Aceptar</button>
+        </div>
+    </div>
 
-    <!-- Librerías limpias y sin duplicados -->
+    <!-- Librerías limpias -->
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-    <script src="app.js?v=13"></script>
+    <script src="app.js?v=30"></script>
 </body>
 </html>

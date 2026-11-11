@@ -1,6 +1,34 @@
 // ==========================================
-// 1. FORMATO DE MONEDA Y FECHAS
+// 1. ALERTAS PERSONALIZADAS Y FORMATOS
 // ==========================================
+window.mostrarAlerta = function(titulo, mensaje, tipo = 'error') {
+    const modal = document.getElementById('custom-alert');
+    const icon = document.getElementById('alert-icon');
+    
+    document.getElementById('alert-title').innerText = titulo;
+    document.getElementById('alert-message').innerText = mensaje;
+    
+    if (tipo === 'error') {
+        icon.innerHTML = '<i class="fas fa-times-circle"></i>';
+        icon.style.color = '#dc3545'; 
+        document.getElementById('alert-title').style.color = '#dc3545';
+    } else if (tipo === 'warning') {
+        icon.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+        icon.style.color = 'var(--primary-orange)'; 
+        document.getElementById('alert-title').style.color = 'var(--primary-orange)';
+    } else if (tipo === 'success') {
+        icon.innerHTML = '<i class="fas fa-check-circle"></i>';
+        icon.style.color = '#28a745'; 
+        document.getElementById('alert-title').style.color = '#28a745';
+    }
+    
+    modal.style.display = 'block';
+};
+
+window.cerrarAlerta = function() {
+    document.getElementById('custom-alert').style.display = 'none';
+};
+
 window.formatearMoneda = function(input) {
     let valor = input.value.replace(/\D/g, ''); 
     if (valor === '') { input.value = ''; return; }
@@ -8,6 +36,7 @@ window.formatearMoneda = function(input) {
 };
 const limpiarNumero = (texto) => parseInt(texto.replace(/\./g, '')) || 0;
 const limpiarFecha = (fecha) => fecha ? fecha.split('T')[0] : '';
+
 
 // ==========================================
 // 2. REGISTRO PWA Y MENÚS
@@ -73,11 +102,10 @@ let ventas = JSON.parse(localStorage.getItem('tecnoaldy_ventas')) || [];
 let registroHistorico = JSON.parse(localStorage.getItem('tecnoaldy_registro')) || inventario.slice(); 
 let equipoEncontrado = null; 
 
-// URL de tu base de datos en Google Sheets
 const API_URL = "https://script.google.com/macros/s/AKfycbyAA7YCwYfS-br1AZ9MhFocPWLQDk7rDsYnYcOst5Kx0lR8IO6eJUFCTnO536dsTchJ/exec"; 
 
 async function sincronizarDesdeNube() {
-    if (!API_URL || API_URL.includes("AQUI_PEGA")) return;
+    if (!API_URL) return;
     try {
         const respuesta = await fetch(API_URL);
         const datos = await respuesta.json();
@@ -107,9 +135,10 @@ function renderizarVistas() {
     
     tbodyInventario.innerHTML = '';
     listaImeis.innerHTML = ''; 
-    inventario.forEach(equipo => {
+    inventario.forEach((equipo, index) => {
         tbodyInventario.innerHTML += `
             <tr>
+                <td style="color: var(--primary-orange); font-weight: bold;">${index + 1}</td>
                 <td>${limpiarFecha(equipo.fecha)}</td><td>${equipo.imei}</td>
                 <td><strong>${equipo.modelo}</strong></td><td>${equipo.ram}/${equipo.rom}</td>
                 <td>${formatCOP(equipo.precio_entrada)}</td>
@@ -150,7 +179,6 @@ function renderizarVistas() {
 const tacDB = { "35912345": { modelo: "Samsung Galaxy A54", ram: 8, rom: 256 } };
 
 async function autocompletarDatosIMEI(imei) {
-    // 1. FRENO DE EMERGENCIA: Verifica los 15 dígitos completos contra el inventario
     const equipoExistente = inventario.find(eq => eq.imei.toString() === imei.toString());
     
     if (equipoExistente) {
@@ -162,7 +190,7 @@ async function autocompletarDatosIMEI(imei) {
         document.getElementById('modelo').style.borderColor = "#dc3545"; 
         document.getElementById('imei').style.borderColor = "#dc3545"; 
         
-        alert(`¡ALERTA! Este equipo (IMEI: ${equipoExistente.imei}) ya está en el inventario.\n\nModelo: ${equipoExistente.modelo}\nIngresado el: ${limpiarFecha(equipoExistente.fecha)}`);
+        mostrarAlerta('IMEI Duplicado', `Este equipo (IMEI: ${equipoExistente.imei}) ya está en el inventario actual.\n\nModelo: ${equipoExistente.modelo}\nIngresado el: ${limpiarFecha(equipoExistente.fecha)}`, 'error');
         
         setTimeout(() => { 
             document.getElementById('modelo').style.borderColor = "var(--border-color)"; 
@@ -174,7 +202,6 @@ async function autocompletarDatosIMEI(imei) {
         return; 
     }
 
-    // 2. BUSCAR EL MODELO USANDO EL TAC (Los primeros 8 dígitos)
     const tac = imei.substring(0, 8);
     const spinner = document.getElementById('loading-imei');
     const btnScan = document.getElementById('btn-scan-imei');
@@ -218,15 +245,14 @@ async function autocompletarDatosIMEI(imei) {
     }
 }
 
-// 3. EL DISPARADOR: Solo arranca si el IMEI tiene 15 dígitos exactos
 document.getElementById('imei').addEventListener('input', function(e) {
     const val = e.target.value;
-    // Solo cuando llega a los 15 dígitos que exige la industria celular
     if(val.length === 15) {
         if(document.getElementById('loading-imei').style.display === 'block') return;
         autocompletarDatosIMEI(val);
     }
 });
+
 // ==========================================
 // 5. INGRESOS Y VENTAS
 // ==========================================
@@ -235,7 +261,7 @@ document.getElementById('form-ingreso').addEventListener('submit', function(e) {
     const imeiIngresado = document.getElementById('imei').value;
     
     if (inventario.find(eq => eq.imei === imeiIngresado)) {
-        alert("Este IMEI ya está registrado.");
+        mostrarAlerta('Atención', 'Este IMEI ya se encuentra registrado en el inventario actual.', 'warning');
         return;
     }
 
@@ -254,25 +280,22 @@ document.getElementById('form-ingreso').addEventListener('submit', function(e) {
     guardarDatosLocales();
     renderizarVistas();
     
-    // --- SOLUCIÓN BUG 1 y 2 ---
-    this.reset(); // Limpia los campos
-    document.getElementById('fecha').value = new Date().toISOString().split('T')[0]; // Vuelve a poner la fecha de hoy
+    this.reset();
+    document.getElementById('fecha').value = new Date().toISOString().split('T')[0];
     
-    // Animación visual de éxito sin cambiar de pestaña
     const btnGuardar = this.querySelector('button[type="submit"]');
     const textoOriginal = btnGuardar.innerHTML;
     const fondoOriginal = btnGuardar.style.backgroundColor;
     
     btnGuardar.innerHTML = '<i class="fas fa-check-circle"></i> ¡Equipo Agregado!';
-    btnGuardar.style.backgroundColor = '#28a745'; // Se pone verde de éxito
+    btnGuardar.style.backgroundColor = '#28a745'; 
     
     setTimeout(() => {
         btnGuardar.innerHTML = textoOriginal;
         btnGuardar.style.backgroundColor = fondoOriginal;
-    }, 2000); // Vuelve a la normalidad después de 2 segundos
+    }, 2000); 
 
-    // Subida a Google Sheets en segundo plano
-    if(API_URL && !API_URL.includes("AQUI_PEGA")) {
+    if(API_URL) {
         fetch(API_URL, {
             method: 'POST',
             body: JSON.stringify({ accion: 'agregar', equipo: nuevoEquipo }),
@@ -325,7 +348,7 @@ document.getElementById('form-venta').addEventListener('submit', function(e) {
     equipoEncontrado = null;
     showTab('ventas');
 
-    if(API_URL && !API_URL.includes("AQUI_PEGA")) {
+    if(API_URL) {
         fetch(API_URL, {
             method: 'POST',
             body: JSON.stringify({ accion: 'vender', venta: nuevaVenta }),
@@ -351,7 +374,7 @@ function abrirScanner(inputId) {
         onScanSuccess, 
         () => {}
     ).catch(err => {
-        alert("Otorga permisos de cámara.");
+        mostrarAlerta('Permisos Denegados', 'Otorga permisos de cámara a tu navegador para poder escanear el código.', 'warning');
         cerrarScanner();
     });
 }
@@ -388,9 +411,9 @@ window.descargarPDF = function(tipo) {
 
     if (tipo === 'inventario') {
         titulo = "Inventario Actual - TecnoAldy";
-        columnas = ["Fecha", "IMEI", "Modelo", "RAM/ROM", "Precio Costo"];
-        filas = inventario.map(eq => [
-            limpiarFecha(eq.fecha), eq.imei, eq.modelo, `${eq.ram} / ${eq.rom}`, formatCOP(eq.precio_entrada)
+        columnas = ["N°", "Fecha", "IMEI", "Modelo", "RAM/ROM", "Precio Costo"];
+        filas = inventario.map((eq, index) => [
+            index + 1, limpiarFecha(eq.fecha), eq.imei, eq.modelo, `${eq.ram} / ${eq.rom}`, formatCOP(eq.precio_entrada)
         ]);
     } else if (tipo === 'ventas') {
         titulo = "Historial de Ventas - TecnoAldy";
@@ -436,7 +459,7 @@ window.descargarPDF = function(tipo) {
 };
 
 // ==========================================
-// 9. MÓDULO DE FACTURACIÓN Y COMPARTIR (OPTIMIZADO Y LIGERO)
+// 9. MÓDULO DE FACTURACIÓN Y COMPARTIR
 // ==========================================
 let equipoVendidoEncontrado = null;
 
@@ -540,7 +563,6 @@ function generarFacturaClientePDF(equipo, cliente, cedula, telefono, vendedor, f
             catch(err) { console.log('Logo no renderizado', err); }
         }
 
-        // Diseño corregido: Fuente gruesa y color morado para la marca
         doc.setFont("helvetica", "bold");
         doc.setFontSize(26);
         doc.setTextColor(128, 0, 128); 
@@ -659,6 +681,6 @@ function generarFacturaClientePDF(equipo, cliente, cedula, telefono, vendedor, f
         
     } catch (error) {
         console.error("Error crítico generando el PDF:", error);
-        alert("Ocurrió un error creando el PDF. Revisa la consola.");
+        mostrarAlerta('Error del Sistema', 'Ocurrió un error creando el PDF. Revisa los datos de la factura e intenta nuevamente.', 'error');
     }
 }
